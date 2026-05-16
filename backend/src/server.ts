@@ -1,7 +1,6 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import uploadRoutes from './routes/upload.routes';
 
 // Load environment variables
