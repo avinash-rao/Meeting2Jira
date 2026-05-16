@@ -69,6 +69,12 @@ export class ReviewComponent implements OnInit {
   }
 
   toggleSelection(id: string): void {
+    const item = this.actionItems.find(i => i.id === id);
+    // Don't allow selection of already created items
+    if (item?.jiraTicket) {
+      return;
+    }
+    
     if (this.selectedItems.has(id)) {
       this.selectedItems.delete(id);
     } else {
@@ -77,10 +83,11 @@ export class ReviewComponent implements OnInit {
   }
 
   toggleSelectAll(): void {
-    if (this.selectedItems.size === this.actionItems.length) {
+    const selectableItems = this.actionItems.filter(item => !item.jiraTicket);
+    if (this.selectedItems.size === selectableItems.length) {
       this.selectedItems.clear();
     } else {
-      this.actionItems.forEach(item => this.selectedItems.add(item.id));
+      selectableItems.forEach(item => this.selectedItems.add(item.id));
     }
   }
 
@@ -89,11 +96,50 @@ export class ReviewComponent implements OnInit {
   }
 
   allSelected(): boolean {
-    return this.actionItems.length > 0 && this.selectedItems.size === this.actionItems.length;
+    const selectableItems = this.actionItems.filter(item => !item.jiraTicket);
+    return selectableItems.length > 0 && this.selectedItems.size === selectableItems.length;
   }
 
   someSelected(): boolean {
-    return this.selectedItems.size > 0 && this.selectedItems.size < this.actionItems.length;
+    const selectableItems = this.actionItems.filter(item => !item.jiraTicket);
+    return this.selectedItems.size > 0 && this.selectedItems.size < selectableItems.length;
+  }
+
+  getCreatedCount(): number {
+    return this.actionItems.filter(item => item.jiraTicket).length;
+  }
+
+  getFailedCount(): number {
+    return this.actionItems.filter(item => item.creationError && !item.jiraTicket).length;
+  }
+
+  getPendingCount(): number {
+    return this.actionItems.filter(item => !item.jiraTicket && !item.creationError).length;
+  }
+
+  clearCreatedItems(): void {
+    const createdIds = this.actionItems
+      .filter(item => item.jiraTicket)
+      .map(item => item.id);
+    
+    createdIds.forEach(id => this.stateService.removeActionItem(id));
+    this.snackBar.open('Removed created items', 'Close', { duration: 2000 });
+  }
+
+  retryFailed(): void {
+    // Select only failed items
+    this.selectedItems.clear();
+    this.actionItems
+      .filter(item => item.creationError && !item.jiraTicket)
+      .forEach(item => {
+        this.selectedItems.add(item.id);
+        // Clear error before retry
+        this.stateService.updateActionItem(item.id, { creationError: undefined });
+      });
+    
+    if (this.selectedItems.size > 0) {
+      this.createJiraTickets();
+    }
   }
 
   updateItem(id: string, field: keyof ActionItem, value: any): void {
@@ -146,11 +192,11 @@ export class ReviewComponent implements OnInit {
     }
 
     const itemsToCreate = this.selectedItems.size > 0
-      ? this.actionItems.filter(item => this.selectedItems.has(item.id))
-      : this.actionItems;
+      ? this.actionItems.filter(item => this.selectedItems.has(item.id) && !item.jiraTicket)
+      : this.actionItems.filter(item => !item.jiraTicket);
 
     if (itemsToCreate.length === 0) {
-      this.snackBar.open('No items selected', 'Close', { duration: 3000 });
+      this.snackBar.open('No items to create (all already created or none selected)', 'Close', { duration: 3000 });
       return;
     }
 
@@ -163,17 +209,48 @@ export class ReviewComponent implements OnInit {
         if (response.success && response.data) {
           const { created, failed } = response.data;
           
+          // Update items with creation status
+          created.forEach((ticket, index) => {
+            // Match by index in itemsToCreate array
+            const item = itemsToCreate[index];
+            if (item) {
+              this.stateService.updateActionItem(item.id, {
+                jiraTicket: {
+                  key: ticket.key,
+                  url: ticket.url || `https://${config.domain}/browse/${ticket.key}`,
+                  createdAt: new Date().toISOString()
+                }
+              });
+            }
+          });
+
+          // Update failed items with error
+          failed.forEach((failure: any) => {
+            const item = this.actionItems.find(i => i.id === failure.item?.id);
+            if (item) {
+              this.stateService.updateActionItem(item.id, {
+                creationError: failure.error
+              });
+            }
+          });
+
+          // Clear selection of created items
+          created.forEach(ticket => {
+            const item = this.actionItems.find(i => i.jiraTicket?.key === ticket.key);
+            if (item) {
+              this.selectedItems.delete(item.id);
+            }
+          });
+          
           if (created.length > 0) {
             this.snackBar.open(
-              `Successfully created ${created.length} Jira ticket(s)!`,
+              `✅ Created ${created.length} ticket(s)${failed.length > 0 ? `, ❌ ${failed.length} failed` : ''}`,
               'Close',
               { duration: 5000 }
             );
-          }
-          
-          if (failed.length > 0) {
+          } else if (failed.length > 0) {
             this.snackBar.open(
-              `${failed.length} ticket(s) failed to create`,
+              `❌ Failed to create ${failed.length} ticket(s)`,
               'Close',
               { duration: 5000 }
             );

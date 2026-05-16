@@ -72,6 +72,28 @@
   flex-wrap: wrap;
 }
 
+.status-summary {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status-summary .created-count {
+  color: #4caf50;
+}
+
+.status-summary .failed-count {
+  color: #f44336;
+}
+
+.status-summary .pending-count {
+  color: #ff9800;
+}
+
 .inline-spinner {
   margin-left: 8px;
 }
@@ -105,6 +127,25 @@
   box-shadow: 0 4px 12px rgba(63, 81, 181, 0.2);
 }
 
+.item-card.created {
+  border: 2px solid #4caf50;
+  background-color: #f1f8f4;
+  opacity: 0.9;
+}
+
+.item-card.created:hover {
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.item-card.failed {
+  border: 2px solid #f44336;
+  background-color: #ffebee;
+}
+
+.item-card.failed:hover {
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
 .card-header-content {
   display: flex;
   align-items: center;
@@ -114,6 +155,24 @@
 
 .item-checkbox {
   flex-shrink: 0;
+}
+
+.status-chip {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.created-chip {
+  background-color: #4caf50;
+  color: white;
+}
+
+.error-chip {
+  background-color: #f44336;
+  color: white;
 }
 
 .confidence-chip {
@@ -139,8 +198,69 @@
   color: white;
 }
 
+.view-button {
+  margin-left: auto;
+}
+
 .remove-button {
   margin-left: auto;
+}
+
+/* Status Messages */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: #ffebee;
+  border-left: 4px solid #f44336;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  color: #c62828;
+}
+
+.error-message mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.created-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  color: #2e7d32;
+}
+
+.created-info mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.jira-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.jira-link:hover {
+  text-decoration: underline;
+}
+
+.jira-link mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 /* Form Fields */
@@ -161,6 +281,12 @@
 
 mat-form-field {
   display: block;
+}
+
+mat-form-field:disabled,
+mat-form-field[disabled] {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 /* Source Quote */

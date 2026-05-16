@@ -8,6 +8,12 @@ export interface ActionItem {
   confidenceScore: number;
   sourceQuote: string;
   timestamp?: string;
+  jiraTicket?: {
+    key: string;
+    url: string;
+    createdAt: string;
+  };
+  creationError?: string;
 }
 
 export interface JiraConfig {
@@ -21,6 +27,7 @@ export interface JiraTicket {
   id: string;
   key: string;
   self: string;
+  url?: string;
 }
 
 export interface ApiResponse<T = any> {
