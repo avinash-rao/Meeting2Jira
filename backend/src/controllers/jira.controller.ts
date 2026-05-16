@@ -140,7 +140,7 @@ export class JiraController {
   static async testConnection(req: Request, res: Response): Promise<void> {
     try {
       const config = req.body as JiraConfig;
-
+      
       // Validate config
       if (!config || !config.domain || !config.email || !config.apiToken || !config.projectKey) {
         res.status(400).json({
