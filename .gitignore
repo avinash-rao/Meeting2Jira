@@ -1,6 +1,5 @@
 # System Files
 .DS_Store
-.bob/
 
 # Backend
 backend/node_modules/
