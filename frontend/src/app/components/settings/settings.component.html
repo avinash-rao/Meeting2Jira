@@ -1,0 +1,148 @@
+<div class="settings-container">
+  <div class="header">
+    <h1>
+      <mat-icon>settings</mat-icon>
+      Jira Configuration
+    </h1>
+    <p class="subtitle">Configure your Jira connection to create tickets</p>
+  </div>
+
+  <mat-card class="settings-card">
+    <mat-card-header>
+      <mat-card-title>Connection Settings</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="status-banner" [class.configured]="isConfigured">
+        <mat-icon>{{ isConfigured ? 'check_circle' : 'info' }}</mat-icon>
+        <span>{{ isConfigured ? 'Jira is configured' : 'Jira is not configured' }}</span>
+      </div>
+
+      <form class="settings-form">
+        <!-- Jira Domain -->
+        <mat-form-field class="full-width">
+          <mat-label>Jira Domain</mat-label>
+          <input
+            matInput
+            [(ngModel)]="config.domain"
+            name="domain"
+            placeholder="yourcompany.atlassian.net"
+            required
+          />
+          <mat-hint>Your Jira cloud domain (without https://)</mat-hint>
+        </mat-form-field>
+
+        <!-- Email -->
+        <mat-form-field class="full-width">
+          <mat-label>Email</mat-label>
+          <input
+            matInput
+            type="email"
+            [(ngModel)]="config.email"
+            name="email"
+            placeholder="your.email@company.com"
+            required
+          />
+          <mat-hint>Your Jira account email</mat-hint>
+        </mat-form-field>
+
+        <!-- API Token -->
+        <mat-form-field class="full-width">
+          <mat-label>API Token</mat-label>
+          <input
+            matInput
+            type="password"
+            [(ngModel)]="config.apiToken"
+            name="apiToken"
+            placeholder="Your Jira API token"
+            required
+          />
+          <mat-hint>
+            <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">
+              Generate API token
+            </a>
+          </mat-hint>
+        </mat-form-field>
+
+        <!-- Project Key -->
+        <mat-form-field class="full-width">
+          <mat-label>Project Key</mat-label>
+          <input
+            matInput
+            [(ngModel)]="config.projectKey"
+            name="projectKey"
+            placeholder="PROJ"
+            required
+          />
+          <mat-hint>The key of your Jira project (e.g., PROJ, DEV)</mat-hint>
+        </mat-form-field>
+      </form>
+
+      <!-- Instructions -->
+      <div class="instructions">
+        <h3>
+          <mat-icon>help_outline</mat-icon>
+          How to get your API token:
+        </h3>
+        <ol>
+          <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">Atlassian API Tokens</a></li>
+          <li>Click "Create API token"</li>
+          <li>Give it a label (e.g., "Meeting2Jira")</li>
+          <li>Copy the token and paste it above</li>
+        </ol>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="!isFormValid() || isTesting"
+        (click)="testConnection()"
+      >
+        <mat-icon>wifi</mat-icon>
+        {{ isTesting ? 'Testing...' : 'Test Connection' }}
+      </button>
+
+      <button
+        mat-raised-button
+        color="accent"
+        [disabled]="!isFormValid()"
+        (click)="saveConfiguration()"
+      >
+        <mat-icon>save</mat-icon>
+        Save Configuration
+      </button>
+
+      <button
+        mat-button
+        color="warn"
+        [disabled]="!isConfigured"
+        (click)="clearConfiguration()"
+      >
+        <mat-icon>delete</mat-icon>
+        Clear
+      </button>
+
+      <mat-spinner *ngIf="isTesting" diameter="24" class="inline-spinner"></mat-spinner>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Security Notice -->
+  <mat-card class="notice-card">
+    <mat-card-content>
+      <div class="notice">
+        <mat-icon>lock</mat-icon>
+        <div>
+          <h4>Security Notice</h4>
+          <p>
+            Your Jira credentials are stored locally in your browser's localStorage.
+            They are never sent to our servers except when creating tickets directly to Jira.
+          </p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Made with Bob -->

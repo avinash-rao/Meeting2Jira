@@ -1,0 +1,180 @@
+<div class="review-container">
+  <div class="header">
+    <h1>
+      <mat-icon>checklist</mat-icon>
+      Review Action Items
+    </h1>
+    <p class="subtitle">Review and edit extracted action items before creating Jira tickets</p>
+  </div>
+
+  <!-- Empty State -->
+  <mat-card *ngIf="actionItems.length === 0" class="empty-state">
+    <mat-card-content>
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <h2>No Action Items</h2>
+      <p>Upload a transcript and extract action items to get started.</p>
+      <button mat-raised-button color="primary" routerLink="/upload">
+        <mat-icon>cloud_upload</mat-icon>
+        Upload Transcript
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Action Items List -->
+  <div *ngIf="actionItems.length > 0">
+    <!-- Toolbar -->
+    <mat-card class="toolbar-card">
+      <mat-card-content>
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <mat-checkbox
+              [checked]="allSelected()"
+              [indeterminate]="someSelected()"
+              (change)="toggleSelectAll()"
+            >
+              Select All ({{ selectedItems.size }} / {{ actionItems.length }})
+            </mat-checkbox>
+          </div>
+          
+          <div class="toolbar-right">
+            <button mat-button (click)="addNewItem()">
+              <mat-icon>add</mat-icon>
+              Add Item
+            </button>
+            
+            <button mat-button (click)="exportToCSV()">
+              <mat-icon>download</mat-icon>
+              Export CSV
+            </button>
+            
+            <button mat-button (click)="exportToJSON()">
+              <mat-icon>code</mat-icon>
+              Export JSON
+            </button>
+            
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="isCreatingTickets"
+              (click)="createJiraTickets()"
+            >
+              <mat-icon>send</mat-icon>
+              {{ isCreatingTickets ? 'Creating...' : 'Create Jira Tickets' }}
+            </button>
+            
+            <mat-spinner *ngIf="isCreatingTickets" diameter="24" class="inline-spinner"></mat-spinner>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Items Cards -->
+    <div class="items-grid">
+      <mat-card *ngFor="let item of actionItems" class="item-card" [class.selected]="isSelected(item.id)">
+        <mat-card-header>
+          <div class="card-header-content">
+            <mat-checkbox
+              [checked]="isSelected(item.id)"
+              (change)="toggleSelection(item.id)"
+              class="item-checkbox"
+            ></mat-checkbox>
+            
+            <mat-chip
+              [class]="'confidence-chip ' + getConfidenceColor(item.confidenceScore)"
+            >
+              {{ getConfidenceLabel(item.confidenceScore) }} ({{ item.confidenceScore }}%)
+            </mat-chip>
+            
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="removeItem(item.id)"
+              class="remove-button"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Title -->
+          <mat-form-field class="full-width">
+            <mat-label>Title</mat-label>
+            <input
+              matInput
+              [(ngModel)]="item.title"
+              (ngModelChange)="updateItem(item.id, 'title', $event)"
+              placeholder="Action item title"
+            />
+          </mat-form-field>
+
+          <!-- Description -->
+          <mat-form-field class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="item.description"
+              (ngModelChange)="updateItem(item.id, 'description', $event)"
+              placeholder="Detailed description"
+              rows="3"
+            ></textarea>
+          </mat-form-field>
+
+          <!-- Assignee and Priority Row -->
+          <div class="form-row">
+            <mat-form-field class="half-width">
+              <mat-label>Assignee</mat-label>
+              <input
+                matInput
+                [(ngModel)]="item.assignee"
+                (ngModelChange)="updateItem(item.id, 'assignee', $event)"
+                placeholder="Assignee name"
+              />
+            </mat-form-field>
+
+            <mat-form-field class="half-width">
+              <mat-label>Priority</mat-label>
+              <mat-select
+                [(ngModel)]="item.priority"
+                (ngModelChange)="updateItem(item.id, 'priority', $event)"
+              >
+                <mat-option *ngFor="let priority of priorities" [value]="priority">
+                  {{ priority }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Due Date -->
+          <mat-form-field class="full-width">
+            <mat-label>Due Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="picker"
+              [(ngModel)]="item.dueDate"
+              (ngModelChange)="updateItem(item.id, 'dueDate', $event)"
+              placeholder="Select due date"
+            />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <!-- Source Quote -->
+          <div class="source-quote">
+            <div class="source-label">
+              <mat-icon>format_quote</mat-icon>
+              Source Quote
+            </div>
+            <p class="quote-text">{{ item.sourceQuote }}</p>
+            <p class="timestamp" *ngIf="item.timestamp">
+              <mat-icon>schedule</mat-icon>
+              {{ item.timestamp }}
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
+<!-- Made with Bob -->

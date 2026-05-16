@@ -1,0 +1,14 @@
+<mat-toolbar color="primary">
+  <mat-icon>assignment</mat-icon>
+  <span class="toolbar-title">{{ title }}</span>
+  <span class="spacer"></span>
+  <a mat-button routerLink="/upload" routerLinkActive="active">Upload</a>
+  <a mat-button routerLink="/review" routerLinkActive="active">Review</a>
+  <a mat-button routerLink="/settings" routerLinkActive="active">Settings</a>
+</mat-toolbar>
+
+<div class="content">
+  <router-outlet></router-outlet>
+</div>
+
+<!-- Made with Bob -->

@@ -1,0 +1,114 @@
+<div class="upload-container">
+  <mat-card class="upload-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>cloud_upload</mat-icon>
+        Upload Meeting Transcript
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Drag and Drop Zone -->
+      <div
+        class="drop-zone"
+        [class.dragging]="isDragging"
+        [class.has-file]="selectedFile"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+      >
+        <mat-icon class="upload-icon">{{ selectedFile ? 'description' : 'cloud_upload' }}</mat-icon>
+        
+        <div *ngIf="!selectedFile" class="drop-zone-text">
+          <p class="primary-text">Drag and drop your transcript here</p>
+          <p class="secondary-text">or click to browse</p>
+          <p class="supported-text">Supported formats: {{ supportedExtensions.join(', ') }}</p>
+        </div>
+
+        <div *ngIf="selectedFile" class="file-info">
+          <p class="file-name">{{ selectedFile.name }}</p>
+          <p class="file-size">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+        </div>
+
+        <input
+          #fileInput
+          type="file"
+          [accept]="supportedExtensions.join(',')"
+          (change)="onFileSelected($event)"
+          style="display: none"
+        />
+      </div>
+
+      <!-- Upload Progress -->
+      <div *ngIf="isUploading" class="progress-section">
+        <p>Uploading transcript...</p>
+        <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+        <p class="progress-text">{{ uploadProgress }}%</p>
+      </div>
+
+      <!-- Transcript Preview -->
+      <div *ngIf="transcript && !isUploading" class="transcript-preview">
+        <h3>Transcript Preview</h3>
+        <div class="preview-stats">
+          <div class="stat">
+            <mat-icon>people</mat-icon>
+            <span>{{ transcript.speakers.length }} speakers</span>
+          </div>
+          <div class="stat">
+            <mat-icon>chat</mat-icon>
+            <span>{{ transcript.entries.length }} entries</span>
+          </div>
+          <div class="stat" *ngIf="transcript.metadata.duration">
+            <mat-icon>schedule</mat-icon>
+            <span>{{ transcript.metadata.duration }}</span>
+          </div>
+        </div>
+
+        <div class="speakers-list">
+          <h4>Speakers:</h4>
+          <mat-chip-set>
+            <mat-chip *ngFor="let speaker of transcript.speakers">{{ speaker }}</mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <div class="transcript-entries">
+          <h4>Sample Entries:</h4>
+          <div class="entry" *ngFor="let entry of transcript.entries.slice(0, 5)">
+            <span class="timestamp" *ngIf="entry.timestamp">{{ entry.timestamp }}</span>
+            <span class="speaker">{{ entry.speaker }}:</span>
+            <span class="text">{{ entry.text }}</span>
+          </div>
+          <p *ngIf="transcript.entries.length > 5" class="more-entries">
+            ... and {{ transcript.entries.length - 5 }} more entries
+          </p>
+        </div>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="!transcript || isExtracting"
+        (click)="extractActionItems()"
+      >
+        <mat-icon>psychology</mat-icon>
+        {{ isExtracting ? 'Extracting...' : 'Extract Action Items' }}
+      </button>
+
+      <button
+        mat-button
+        [disabled]="!selectedFile || isUploading || isExtracting"
+        (click)="reset()"
+      >
+        <mat-icon>refresh</mat-icon>
+        Reset
+      </button>
+
+      <mat-spinner *ngIf="isExtracting" diameter="24" class="inline-spinner"></mat-spinner>
+    </mat-card-actions>
+  </mat-card>
+</div>
+
+<!-- Made with Bob -->
