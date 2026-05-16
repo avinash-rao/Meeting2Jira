@@ -1,8 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import uploadRoutes from './routes/upload.routes';
+import extractRoutes from './routes/extract.routes';
 
 // Load environment variables
 dotenv.config();
@@ -29,7 +29,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/upload', uploadRoutes);
-// app.use('/api/extract', extractRoutes);
+app.use('/api/extract', extractRoutes);
 // app.use('/api/jira', jiraRoutes);
 
 // Error handling middleware
