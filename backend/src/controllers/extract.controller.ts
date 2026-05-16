@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
-import { OpenAIService } from '../services/openai.service';
+import { WatsonXService } from '../services/watsonx.service';
 import { ApiResponse, ParsedTranscript, ExtractedActionItems } from '../types';
 
 export class ExtractController {
-  private static openaiService: OpenAIService;
+  private static watsonxService: WatsonXService;
 
   /**
-   * Initialize OpenAI service (lazy loading)
+   * Initialize watsonx.ai service (lazy loading)
    */
-  private static getOpenAIService(): OpenAIService {
-    if (!this.openaiService) {
-      this.openaiService = new OpenAIService();
+  private static getWatsonXService(): WatsonXService {
+    if (!ExtractController.watsonxService) {
+      ExtractController.watsonxService = new WatsonXService();
     }
-    return this.openaiService;
+    return ExtractController.watsonxService;
   }
 
   /**
@@ -40,8 +40,8 @@ export class ExtractController {
         return;
       }
 
-      // Extract action items using OpenAI
-      const service = this.getOpenAIService();
+      // Extract action items using watsonx.ai
+      const service = ExtractController.getWatsonXService();
       const extractedItems = await service.extractActionItems(transcript);
 
       res.json({
@@ -53,11 +53,11 @@ export class ExtractController {
     } catch (error: any) {
       console.error('Extract error:', error);
       
-      // Handle specific OpenAI errors
-      if (error.message?.includes('OPENAI_API_KEY')) {
+      // Handle specific watsonx.ai errors
+      if (error.message?.includes('WATSONX_API_KEY') || error.message?.includes('WATSONX_PROJECT_ID')) {
         res.status(500).json({
           success: false,
-          error: 'OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.'
+          error: 'watsonx.ai credentials are not configured. Please set WATSONX_API_KEY and WATSONX_PROJECT_ID environment variables.'
         } as ApiResponse);
         return;
       }
@@ -70,34 +70,34 @@ export class ExtractController {
   }
 
   /**
-   * Test OpenAI connection
+   * Test watsonx.ai connection
    * GET /api/extract/test
    */
   static async testConnection(_req: Request, res: Response): Promise<void> {
     try {
-      const service = this.getOpenAIService();
+      const service = ExtractController.getWatsonXService();
       const isConnected = await service.testConnection();
 
       if (isConnected) {
         res.json({
           success: true,
-          message: 'OpenAI connection successful',
+          message: 'watsonx.ai connection successful',
           data: {
-            model: 'gpt-4o',
+            model: 'meta-llama/llama-3-3-70b-instruct',
             status: 'connected'
           }
         } as ApiResponse);
       } else {
         res.status(500).json({
           success: false,
-          error: 'Failed to connect to OpenAI API'
+          error: 'Failed to connect to watsonx.ai'
         } as ApiResponse);
       }
     } catch (error: any) {
       console.error('Connection test error:', error);
       res.status(500).json({
         success: false,
-        error: error.message || 'Failed to test OpenAI connection'
+        error: error.message || 'Failed to test watsonx.ai connection'
       } as ApiResponse);
     }
   }
@@ -110,7 +110,8 @@ export class ExtractController {
     res.json({
       success: true,
       data: {
-        model: 'gpt-4o',
+        model: 'meta-llama/llama-3-3-70b-instruct',
+        provider: 'IBM watsonx.ai',
         capabilities: [
           'Extract action items from meeting transcripts',
           'Identify assignees from participants',
