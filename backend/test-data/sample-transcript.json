@@ -1,0 +1,55 @@
+{
+  "speakers": ["John Doe", "Jane Smith", "Bob Wilson"],
+  "entries": [
+    {
+      "timestamp": "00:00:05.000",
+      "speaker": "John Doe",
+      "text": "Good morning everyone. Let's start with the project updates."
+    },
+    {
+      "timestamp": "00:00:15.000",
+      "speaker": "Jane Smith",
+      "text": "I've completed the database migration. It's ready for testing."
+    },
+    {
+      "timestamp": "00:00:30.000",
+      "speaker": "John Doe",
+      "text": "Great! Bob, can you test the database changes by end of day today?"
+    },
+    {
+      "timestamp": "00:00:40.000",
+      "speaker": "Bob Wilson",
+      "text": "Sure, I'll run the tests this afternoon and send you the results."
+    },
+    {
+      "timestamp": "00:01:00.000",
+      "speaker": "Jane Smith",
+      "text": "Also, we need to update the API documentation. John, can you handle that by Friday?"
+    },
+    {
+      "timestamp": "00:01:15.000",
+      "speaker": "John Doe",
+      "text": "Yes, I'll update the docs and push them to the repo by end of week."
+    },
+    {
+      "timestamp": "00:01:30.000",
+      "speaker": "Bob Wilson",
+      "text": "One more thing - the security audit report needs review. It's high priority."
+    },
+    {
+      "timestamp": "00:01:45.000",
+      "speaker": "Jane Smith",
+      "text": "I can review that. I'll prioritize it and have feedback by tomorrow."
+    },
+    {
+      "timestamp": "00:02:00.000",
+      "speaker": "John Doe",
+      "text": "Perfect. Let's also schedule a follow-up meeting for next Monday to review progress."
+    }
+  ],
+  "metadata": {
+    "duration": "00:02:30.000",
+    "date": "2024-01-15T10:00:00.000Z",
+    "fileName": "team-standup.vtt"
+  }
+}

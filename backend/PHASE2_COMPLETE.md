@@ -1,9 +1,9 @@
-# Phase 2: AI Integration - COMPLETE ✅
+# Phase 2: AI Integration - COMPLETE ✅ (watsonx.ai)
 
 ## What Was Implemented
 
-### 1. OpenAI Service (`src/services/openai.service.ts`)
-- ✅ OpenAI GPT-4o client configuration
+### 1. WatsonX Service (`src/services/watsonx.service.ts`)
+- ✅ IBM watsonx.ai client configuration (Granite 13B Chat v2)
 - ✅ Action item extraction with structured prompts
 - ✅ Confidence score calculation (0-100)
 - ✅ Priority detection (High/Medium/Low)
@@ -11,17 +11,18 @@
 - ✅ Source quote extraction
 - ✅ Timestamp preservation
 - ✅ Due date extraction when mentioned
-- ✅ JSON response format enforcement
+- ✅ JSON extraction from generated text
 - ✅ Error handling and retries
 - ✅ Connection testing capability
+- ✅ Support for IBM Cloud authentication
 
 ### 2. Extract Controller (`src/controllers/extract.controller.ts`)
 - ✅ `POST /api/extract` - Extract action items from transcript
-- ✅ `GET /api/extract/test` - Test OpenAI connection
+- ✅ `GET /api/extract/test` - Test watsonx.ai connection
 - ✅ `GET /api/extract/info` - Get extraction capabilities info
 - ✅ Request validation
 - ✅ Error handling with proper status codes
-- ✅ OpenAI-specific error messages
+- ✅ watsonx.ai-specific error messages
 
 ### 3. Extract Routes (`src/routes/extract.routes.ts`)
 - ✅ Express router configuration
@@ -93,9 +94,9 @@ Test OpenAI API connection.
 ```json
 {
   "success": true,
-  "message": "OpenAI connection successful",
+  "message": "watsonx.ai connection successful",
   "data": {
-    "model": "gpt-4o",
+    "model": "meta-llama/llama-3-3-70b-instruct",
     "status": "connected"
   }
 }
@@ -109,7 +110,8 @@ Get information about extraction capabilities.
 {
   "success": true,
   "data": {
-    "model": "gpt-4o",
+    "model": "meta-llama/llama-3-3-70b-instruct",
+    "provider": "IBM watsonx.ai",
     "capabilities": [
       "Extract action items from meeting transcripts",
       "Identify assignees from participants",
@@ -151,17 +153,26 @@ The service uses a carefully crafted prompt that:
 
 Add to your `.env` file:
 ```env
-OPENAI_API_KEY=sk-your-actual-openai-api-key-here
+WATSONX_API_KEY=your-watsonx-api-key-here
+WATSONX_PROJECT_ID=your-project-id-here
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
 ```
+
+**Getting Credentials:**
+1. Create IBM Cloud account: https://cloud.ibm.com/registration
+2. Create watsonx.ai instance
+3. Get API key from IAM settings
+4. Get Project ID from your watsonx.ai project
+5. See `WATSONX_MIGRATION.md` for detailed instructions
 
 ## Testing
 
-### 1. Test OpenAI Connection
+### 1. Test watsonx.ai Connection
 ```bash
 curl http://localhost:3000/api/extract/test
 ```
 
-**Expected:** Connection successful message
+**Expected:** Connection successful message with IBM Granite model info
 
 ### 2. Test Extraction Info
 ```bash
@@ -202,13 +213,14 @@ echo $TRANSCRIPT | curl -X POST http://localhost:3000/api/extract \
   -d @-
 ```
 
-## Files Created (3 files)
+## Files Created/Updated
 
-1. `src/services/openai.service.ts` - OpenAI integration service
+1. `src/services/watsonx.service.ts` - watsonx.ai integration service
 2. `src/controllers/extract.controller.ts` - Extract request handlers
 3. `src/routes/extract.routes.ts` - Extract route definitions
 4. `src/server.ts` - Updated with extract routes
 5. `PHASE2_COMPLETE.md` - This documentation
+6. `WATSONX_MIGRATION.md` - Migration guide from OpenAI
 
 ## Error Handling
 
@@ -216,7 +228,7 @@ echo $TRANSCRIPT | curl -X POST http://localhost:3000/api/extract \
 ```json
 {
   "success": false,
-  "error": "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable."
+  "error": "watsonx.ai credentials are not configured. Please set WATSONX_API_KEY and WATSONX_PROJECT_ID environment variables."
 }
 ```
 
@@ -236,7 +248,7 @@ echo $TRANSCRIPT | curl -X POST http://localhost:3000/api/extract \
 }
 ```
 
-### OpenAI API Error
+### watsonx.ai API Error
 ```json
 {
   "success": false,
@@ -256,7 +268,7 @@ echo $TRANSCRIPT | curl -X POST http://localhost:3000/api/extract \
 
 ## Success Criteria ✅
 
-- [x] OpenAI service configured with GPT-4o
+- [x] watsonx.ai service configured with IBM Granite 13B Chat v2
 - [x] Extraction endpoint accepts ParsedTranscript
 - [x] Returns structured ActionItem array
 - [x] Identifies assignees from participants
@@ -270,17 +282,18 @@ echo $TRANSCRIPT | curl -X POST http://localhost:3000/api/extract \
 
 ## Performance Notes
 
-- Average extraction time: 3-8 seconds (depends on transcript length)
-- GPT-4o model used for accuracy
+- Average extraction time: 5-10 seconds (depends on transcript length and model load)
+- IBM Granite 13B Chat v2 model used for enterprise-grade extraction
 - Temperature set to 0.3 for consistent results
-- JSON mode enforced for reliable parsing
-- Retries handled by OpenAI SDK
+- JSON extraction from generated text
+- Retries handled by watsonx.ai SDK
 
 ## Cost Considerations
 
-- GPT-4o pricing: ~$0.01-0.05 per transcript (varies by length)
-- Typical meeting (30 min): ~2000-4000 tokens
-- Monitor usage in OpenAI dashboard
+- watsonx.ai pricing varies by region and plan
+- May have free tier or capacity units available
+- Check IBM Cloud pricing dashboard for details
+- Monitor usage in IBM Cloud console
 - Consider caching for repeated extractions
 
 // Made with Bob
