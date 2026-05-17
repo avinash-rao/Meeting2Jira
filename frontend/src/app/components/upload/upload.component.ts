@@ -66,9 +66,26 @@ export class UploadComponent implements OnInit {
   }
 
   get detectedLanguage(): string {
-    // Simple language detection based on file name or content
-    // For now, return a default
-    return 'English';
+    return this.transcript?.metadata?.language || 'Unknown';
+  }
+  
+  get languageFlag(): string {
+    const language = this.detectedLanguage.toLowerCase();
+    const flags: { [key: string]: string } = {
+      'english': '🇺🇸',
+      'french': '🇫🇷',
+      'spanish': '🇪🇸',
+      'german': '🇩🇪',
+      'italian': '🇮🇹',
+      'portuguese': '🇵🇹',
+      'russian': '🇷🇺',
+      'japanese': '🇯🇵',
+      'korean': '🇰🇷',
+      'chinese': '🇨🇳',
+      'arabic': '🇸🇦',
+      'hindi': '🇮🇳'
+    };
+    return flags[language] || '🌐';
   }
 
   onDragOver(event: DragEvent): void {
