@@ -238,7 +238,12 @@ export class JiraService {
         let assigneeAccountId: string | undefined;
         if (item.assignee && item.assignee !== 'Unassigned') {
           const user = await this.findUserByName(item.assignee);
-          assigneeAccountId = user?.accountId;
+          if (user) {
+            assigneeAccountId = user.accountId;
+          } else {
+            // Log warning if user not found but continue without assignee
+            console.warn(`User '${item.assignee}' not found in Jira. Creating ticket without assignee.`);
+          }
         }
 
         const ticket = await this.createTicket(item, assigneeAccountId);

@@ -1,148 +1,139 @@
-<div class="settings-container">
-  <div class="header">
-    <h1>
-      <mat-icon>settings</mat-icon>
-      Jira Configuration
-    </h1>
-    <p class="subtitle">Configure your Jira connection to create tickets</p>
-  </div>
+<div class="min-h-screen bg-jira-bg flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+    <!-- Jira Blue Header Strip -->
+    <div class="bg-jira-nav rounded-t-xl p-6 text-center">
+      <h1 class="text-2xl font-bold text-white">Meeting2Jira</h1>
+    </div>
 
-  <mat-card class="settings-card">
-    <mat-card-header>
-      <mat-card-title>Connection Settings</mat-card-title>
-    </mat-card-header>
+    <!-- Main Card -->
+    <div class="bg-jira-card rounded-b-xl border border-jira-border border-t-0 p-8 shadow-lg">
+      <p class="text-jira-textSecondary text-center mb-6">Connect your Jira account to get started</p>
 
-    <mat-card-content>
-      <div class="status-banner" [class.configured]="isConfigured">
-        <mat-icon>{{ isConfigured ? 'check_circle' : 'info' }}</mat-icon>
-        <span>{{ isConfigured ? 'Jira is configured' : 'Jira is not configured' }}</span>
-      </div>
-
-      <form class="settings-form">
+      <!-- Form -->
+      <form class="space-y-5">
         <!-- Jira Domain -->
-        <mat-form-field class="full-width">
-          <mat-label>Jira Domain</mat-label>
+        <div>
+          <label class="block text-sm font-medium text-jira-textPrimary mb-2">Jira Domain</label>
           <input
-            matInput
+            type="text"
             [(ngModel)]="config.domain"
             name="domain"
             placeholder="yourcompany.atlassian.net"
-            required
+            class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none"
           />
-          <mat-hint>Your Jira cloud domain (without https://)</mat-hint>
-        </mat-form-field>
+          <p class="text-xs text-jira-textSecondary mt-1">Your Jira cloud domain (without https://)</p>
+        </div>
 
         <!-- Email -->
-        <mat-form-field class="full-width">
-          <mat-label>Email</mat-label>
+        <div>
+          <label class="block text-sm font-medium text-jira-textPrimary mb-2">Email</label>
           <input
-            matInput
             type="email"
             [(ngModel)]="config.email"
             name="email"
             placeholder="your.email@company.com"
-            required
+            class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none"
           />
-          <mat-hint>Your Jira account email</mat-hint>
-        </mat-form-field>
+          <p class="text-xs text-jira-textSecondary mt-1">Your Jira account email</p>
+        </div>
 
         <!-- API Token -->
-        <mat-form-field class="full-width">
-          <mat-label>API Token</mat-label>
+        <div>
+          <label class="block text-sm font-medium text-jira-textPrimary mb-2">API Token</label>
           <input
-            matInput
             type="password"
             [(ngModel)]="config.apiToken"
             name="apiToken"
             placeholder="Your Jira API token"
-            required
+            class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none"
           />
-          <mat-hint>
-            <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">
-              Generate API token
+          <p class="text-xs text-jira-textSecondary mt-1">
+            <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" class="text-jira-primary hover:text-jira-primaryHover">
+              Generate token
             </a>
-          </mat-hint>
-        </mat-form-field>
-
-        <!-- Project Key -->
-        <mat-form-field class="full-width">
-          <mat-label>Project Key</mat-label>
-          <input
-            matInput
-            [(ngModel)]="config.projectKey"
-            name="projectKey"
-            placeholder="PROJ"
-            required
-          />
-          <mat-hint>The key of your Jira project (e.g., PROJ, DEV)</mat-hint>
-        </mat-form-field>
-      </form>
-
-      <!-- Instructions -->
-      <div class="instructions">
-        <h3>
-          <mat-icon>help_outline</mat-icon>
-          How to get your API token:
-        </h3>
-        <ol>
-          <li>Go to <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">Atlassian API Tokens</a></li>
-          <li>Click "Create API token"</li>
-          <li>Give it a label (e.g., "Meeting2Jira")</li>
-          <li>Copy the token and paste it above</li>
-        </ol>
-      </div>
-    </mat-card-content>
-
-    <mat-card-actions>
-      <button
-        mat-raised-button
-        color="primary"
-        [disabled]="!isFormValid() || isTesting"
-        (click)="testConnection()"
-      >
-        <mat-icon>wifi</mat-icon>
-        {{ isTesting ? 'Testing...' : 'Test Connection' }}
-      </button>
-
-      <button
-        mat-raised-button
-        color="accent"
-        [disabled]="!isFormValid()"
-        (click)="saveConfiguration()"
-      >
-        <mat-icon>save</mat-icon>
-        Save Configuration
-      </button>
-
-      <button
-        mat-button
-        color="warn"
-        [disabled]="!isConfigured"
-        (click)="clearConfiguration()"
-      >
-        <mat-icon>delete</mat-icon>
-        Clear
-      </button>
-
-      <mat-spinner *ngIf="isTesting" diameter="24" class="inline-spinner"></mat-spinner>
-    </mat-card-actions>
-  </mat-card>
-
-  <!-- Security Notice -->
-  <mat-card class="notice-card">
-    <mat-card-content>
-      <div class="notice">
-        <mat-icon>lock</mat-icon>
-        <div>
-          <h4>Security Notice</h4>
-          <p>
-            Your Jira credentials are stored locally in your browser's localStorage.
-            They are never sent to our servers except when creating tickets directly to Jira.
           </p>
         </div>
+
+        <!-- Project Key -->
+        <div>
+          <label class="block text-sm font-medium text-jira-textPrimary mb-2">Project Key</label>
+          <input
+            type="text"
+            [(ngModel)]="config.projectKey"
+            name="projectKey"
+            placeholder="SCRUM"
+            class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none"
+          />
+          <p class="text-xs text-jira-textSecondary mt-1">The key of your Jira project (e.g., SCRUM, DEV)</p>
+        </div>
+      </form>
+
+      <!-- Test Connection Button -->
+      <button
+        (click)="testConnection()"
+        [disabled]="!isFormValid() || isTesting"
+        class="w-full mt-6 bg-jira-primary hover:bg-jira-primaryHover disabled:bg-jira-textSecondary disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded transition-colors flex items-center justify-center gap-2"
+      >
+        <svg *ngIf="isTesting" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>{{ isTesting ? 'Testing Connection...' : 'Test Connection' }}</span>
+      </button>
+
+      <!-- Success Message -->
+      <div *ngIf="testSuccess" class="mt-4 bg-jira-successBg border border-jira-success rounded p-4 flex items-start gap-3">
+        <svg class="w-6 h-6 text-jira-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <p class="text-jira-success font-semibold">Connected to {{ config.projectKey }} project</p>
+          <p class="text-sm text-jira-textSecondary mt-1">Your Jira connection is working correctly</p>
+        </div>
       </div>
-    </mat-card-content>
-  </mat-card>
+
+      <!-- Error Message -->
+      <div *ngIf="testError" class="mt-4 bg-jira-errorBg border border-jira-error rounded p-4 flex items-start gap-3">
+        <svg class="w-6 h-6 text-jira-error flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <p class="text-jira-error font-semibold">Connection Failed</p>
+          <p class="text-sm text-jira-textSecondary mt-1">{{ testError }}</p>
+        </div>
+      </div>
+
+      <!-- Continue Button (First Time) -->
+      <button
+        *ngIf="isFirstTime && testSuccess"
+        (click)="continueToApp()"
+        class="w-full mt-4 bg-jira-primary hover:bg-jira-primaryHover text-white font-medium py-3 px-6 rounded transition-colors flex items-center justify-center gap-2"
+      >
+        <span>Continue to App</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+        </svg>
+      </button>
+
+      <!-- Save Button (Returning User) -->
+      <button
+        *ngIf="!isFirstTime"
+        (click)="saveConfiguration()"
+        [disabled]="!isFormValid()"
+        class="w-full mt-4 bg-jira-primary hover:bg-jira-primaryHover disabled:bg-jira-textSecondary disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded transition-colors"
+      >
+        Save Configuration
+      </button>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="mt-6 text-center text-sm text-jira-textSecondary">
+      <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+      Your credentials are stored locally and never sent to our servers
+    </div>
+  </div>
 </div>
 
 <!-- Made with Bob -->
