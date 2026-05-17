@@ -1,45 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { ActionItem } from '../../models/action-item.model';
 import { StateService } from '../../services/state.service';
 import { ApiService } from '../../services/api.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-review',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatChipsModule,
-    MatCheckboxModule,
-    MatSnackBarModule,
-    MatProgressSpinnerModule,
-    MatDialogModule
-  ],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './review.component.html',
   styleUrls: ['./review.component.css']
 })
@@ -48,32 +20,30 @@ export class ReviewComponent implements OnInit {
   selectedItems: Set<string> = new Set();
   isCreatingTickets = false;
   priorities = ['High', 'Medium', 'Low'];
+  transcript: any = null;
 
   constructor(
     private stateService: StateService,
     private apiService: ApiService,
     private router: Router,
-    private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
     this.stateService.actionItems$.subscribe(items => {
       this.actionItems = items;
-      if (items.length === 0) {
-        this.snackBar.open('No action items found. Please upload a transcript first.', 'Close', {
-          duration: 5000
-        });
-      }
     });
+    
+    this.transcript = this.stateService.getTranscript();
+  }
+
+  get meetingFileName(): string {
+    return this.transcript?.metadata?.fileName || 'Meeting Transcript';
   }
 
   toggleSelection(id: string): void {
     const item = this.actionItems.find(i => i.id === id);
-    // Don't allow selection of already created items
-    if (item?.jiraTicket) {
-      return;
-    }
+    if (item?.jiraTicket) return;
     
     if (this.selectedItems.has(id)) {
       this.selectedItems.delete(id);
@@ -100,46 +70,16 @@ export class ReviewComponent implements OnInit {
     return selectableItems.length > 0 && this.selectedItems.size === selectableItems.length;
   }
 
-  someSelected(): boolean {
-    const selectableItems = this.actionItems.filter(item => !item.jiraTicket);
-    return this.selectedItems.size > 0 && this.selectedItems.size < selectableItems.length;
+  getConfidenceClass(score: number): string {
+    if (score >= 80) return 'high';
+    if (score >= 70) return 'good';
+    return 'low';
   }
 
-  getCreatedCount(): number {
-    return this.actionItems.filter(item => item.jiraTicket).length;
-  }
-
-  getFailedCount(): number {
-    return this.actionItems.filter(item => item.creationError && !item.jiraTicket).length;
-  }
-
-  getPendingCount(): number {
-    return this.actionItems.filter(item => !item.jiraTicket && !item.creationError).length;
-  }
-
-  clearCreatedItems(): void {
-    const createdIds = this.actionItems
-      .filter(item => item.jiraTicket)
-      .map(item => item.id);
-    
-    createdIds.forEach(id => this.stateService.removeActionItem(id));
-    this.snackBar.open('Removed created items', 'Close', { duration: 2000 });
-  }
-
-  retryFailed(): void {
-    // Select only failed items
-    this.selectedItems.clear();
-    this.actionItems
-      .filter(item => item.creationError && !item.jiraTicket)
-      .forEach(item => {
-        this.selectedItems.add(item.id);
-        // Clear error before retry
-        this.stateService.updateActionItem(item.id, { creationError: undefined });
-      });
-    
-    if (this.selectedItems.size > 0) {
-      this.createJiraTickets();
-    }
+  getConfidenceLabel(score: number): string {
+    if (score >= 80) return 'High confidence';
+    if (score >= 70) return 'Good confidence';
+    return '⚠ Low confidence';
   }
 
   updateItem(id: string, field: keyof ActionItem, value: any): void {
@@ -149,45 +89,15 @@ export class ReviewComponent implements OnInit {
   removeItem(id: string): void {
     this.stateService.removeActionItem(id);
     this.selectedItems.delete(id);
-    this.snackBar.open('Action item removed', 'Close', { duration: 2000 });
-  }
-
-  addNewItem(): void {
-    const newItem: ActionItem = {
-      id: `manual-${Date.now()}`,
-      title: 'New Action Item',
-      description: '',
-      assignee: '',
-      priority: 'Medium',
-      confidenceScore: 100,
-      sourceQuote: 'Manually added',
-      dueDate: undefined
-    };
-    this.stateService.addActionItem(newItem);
-    this.snackBar.open('New action item added', 'Close', { duration: 2000 });
-  }
-
-  getConfidenceColor(score: number): string {
-    if (score >= 80) return 'success';
-    if (score >= 60) return 'warning';
-    return 'error';
-  }
-
-  getConfidenceLabel(score: number): string {
-    if (score >= 80) return 'High';
-    if (score >= 60) return 'Medium';
-    return 'Low';
+    this.toastService.success('Item Removed', 'Action item has been deleted');
   }
 
   createJiraTickets(): void {
     const config = this.stateService.getJiraConfig();
     
     if (!config) {
-      this.snackBar.open('Please configure Jira settings first', 'Go to Settings', {
-        duration: 5000
-      }).onAction().subscribe(() => {
-        this.router.navigate(['/settings']);
-      });
+      this.toastService.error('Configuration Required', 'Please configure Jira settings first');
+      this.router.navigate(['/setup']);
       return;
     }
 
@@ -196,7 +106,7 @@ export class ReviewComponent implements OnInit {
       : this.actionItems.filter(item => !item.jiraTicket);
 
     if (itemsToCreate.length === 0) {
-      this.snackBar.open('No items to create (all already created or none selected)', 'Close', { duration: 3000 });
+      this.toastService.warning('No Items Selected', 'Please select items to create');
       return;
     }
 
@@ -209,9 +119,7 @@ export class ReviewComponent implements OnInit {
         if (response.success && response.data) {
           const { created, failed } = response.data;
           
-          // Update items with creation status
           created.forEach((ticket, index) => {
-            // Match by index in itemsToCreate array
             const item = itemsToCreate[index];
             if (item) {
               this.stateService.updateActionItem(item.id, {
@@ -221,10 +129,19 @@ export class ReviewComponent implements OnInit {
                   createdAt: new Date().toISOString()
                 }
               });
+              
+              // Show individual success toast with link
+              this.toastService.success(
+                `${ticket.key} created successfully`,
+                'Ticket has been created in Jira',
+                {
+                  text: 'View in Jira →',
+                  url: ticket.url || `https://${config.domain}/browse/${ticket.key}`
+                }
+              );
             }
           });
 
-          // Update failed items with error
           failed.forEach((failure: any) => {
             const item = this.actionItems.find(i => i.id === failure.item?.id);
             if (item) {
@@ -234,7 +151,6 @@ export class ReviewComponent implements OnInit {
             }
           });
 
-          // Clear selection of created items
           created.forEach(ticket => {
             const item = this.actionItems.find(i => i.jiraTicket?.key === ticket.key);
             if (item) {
@@ -242,30 +158,19 @@ export class ReviewComponent implements OnInit {
             }
           });
           
-          if (created.length > 0) {
-            this.snackBar.open(
-              `✅ Created ${created.length} ticket(s)${failed.length > 0 ? `, ❌ ${failed.length} failed` : ''}`,
-              'Close',
-              { duration: 5000 }
-            );
-          } else if (failed.length > 0) {
-            this.snackBar.open(
-              `❌ Failed to create ${failed.length} ticket(s)`,
-              'Close',
-              { duration: 5000 }
+          if (failed.length > 0) {
+            this.toastService.error(
+              'Some Tickets Failed',
+              `${failed.length} ticket(s) could not be created`
             );
           }
         } else {
-          this.snackBar.open(response.error || 'Failed to create tickets', 'Close', {
-            duration: 5000
-          });
+          this.toastService.error('Creation Failed', response.error || 'Unknown error');
         }
       },
       error: (error) => {
         this.isCreatingTickets = false;
-        this.snackBar.open('Failed to create tickets: ' + error.message, 'Close', {
-          duration: 5000
-        });
+        this.toastService.error('Creation Failed', error.message);
       }
     });
   }
@@ -294,7 +199,7 @@ export class ReviewComponent implements OnInit {
     a.click();
     window.URL.revokeObjectURL(url);
 
-    this.snackBar.open('CSV exported successfully', 'Close', { duration: 3000 });
+    this.toastService.success('Export Complete', 'CSV file has been downloaded');
   }
 
   exportToJSON(): void {
@@ -307,7 +212,7 @@ export class ReviewComponent implements OnInit {
     a.click();
     window.URL.revokeObjectURL(url);
 
-    this.snackBar.open('JSON exported successfully', 'Close', { duration: 3000 });
+    this.toastService.success('Export Complete', 'JSON file has been downloaded');
   }
 }
 

@@ -1,243 +1,238 @@
-<div class="review-container">
-  <div class="header">
-    <h1>
-      <mat-icon>checklist</mat-icon>
-      Review Action Items
-    </h1>
-    <p class="subtitle">Review and edit extracted action items before creating Jira tickets</p>
-  </div>
+<div class="min-h-screen bg-jira-bg p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Empty State -->
+    <div *ngIf="actionItems.length === 0" class="flex items-center justify-center min-h-[60vh]">
+      <div class="text-center">
+        <svg class="w-24 h-24 mx-auto mb-6 text-jira-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+        </svg>
+        <h2 class="text-2xl font-bold text-jira-textPrimary mb-2">No transcript uploaded yet</h2>
+        <p class="text-jira-textSecondary mb-6">Upload a meeting transcript to extract action items</p>
+        <a routerLink="/upload" class="inline-flex items-center gap-2 bg-jira-primary hover:bg-jira-primaryHover text-white font-medium py-3 px-6 rounded transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+          </svg>
+          Upload Transcript
+        </a>
+      </div>
+    </div>
 
-  <!-- Empty State -->
-  <mat-card *ngIf="actionItems.length === 0" class="empty-state">
-    <mat-card-content>
-      <mat-icon class="empty-icon">inbox</mat-icon>
-      <h2>No Action Items</h2>
-      <p>Upload a transcript and extract action items to get started.</p>
-      <button mat-raised-button color="primary" routerLink="/upload">
-        <mat-icon>cloud_upload</mat-icon>
-        Upload Transcript
-      </button>
-    </mat-card-content>
-  </mat-card>
+    <!-- Action Items List -->
+    <div *ngIf="actionItems.length > 0">
+      <!-- Header -->
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-jira-textPrimary mb-2">Review Action Items</h1>
+          <div class="flex items-center gap-4 text-sm">
+            <span class="px-3 py-1 bg-blue-50 text-jira-primary border border-blue-200 rounded-full font-medium">
+              {{ actionItems.length }} items found
+            </span>
+            <span class="text-jira-textSecondary">{{ meetingFileName }}</span>
+          </div>
+        </div>
+      </div>
 
-  <!-- Action Items List -->
-  <div *ngIf="actionItems.length > 0">
-    <!-- Toolbar -->
-    <mat-card class="toolbar-card">
-      <mat-card-content>
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <mat-checkbox
-              [checked]="allSelected()"
-              [indeterminate]="someSelected()"
-              (change)="toggleSelectAll()"
-            >
-              Select All ({{ selectedItems.size }} / {{ actionItems.length }})
-            </mat-checkbox>
+      <!-- Action Bar -->
+      <div class="sticky-toolbar px-6 py-3">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                [checked]="allSelected()"
+                (change)="toggleSelectAll()"
+                class="w-5 h-5 rounded border-jira-border text-jira-primary focus:ring-2 focus:ring-jira-primary focus:ring-offset-0"
+              />
+              <span class="text-jira-textPrimary font-medium">Select All</span>
+            </label>
           </div>
           
-          <div class="toolbar-right">
-            <div class="status-summary" *ngIf="getCreatedCount() > 0 || getFailedCount() > 0">
-              <span class="created-count" *ngIf="getCreatedCount() > 0">✅ {{ getCreatedCount() }} created</span>
-              <span class="failed-count" *ngIf="getFailedCount() > 0">❌ {{ getFailedCount() }} failed</span>
-              <span class="pending-count" *ngIf="getPendingCount() > 0">⏳ {{ getPendingCount() }} pending</span>
-            </div>
-
-            <button mat-button (click)="addNewItem()">
-              <mat-icon>add</mat-icon>
-              Add Item
-            </button>
-
-            <button mat-button (click)="retryFailed()" *ngIf="getFailedCount() > 0">
-              <mat-icon>refresh</mat-icon>
-              Retry Failed
-            </button>
-
-            <button mat-button (click)="clearCreatedItems()" *ngIf="getCreatedCount() > 0">
-              <mat-icon>clear</mat-icon>
-              Clear Created
-            </button>
-            
-            <button mat-button (click)="exportToCSV()">
-              <mat-icon>download</mat-icon>
+          <div class="flex items-center gap-3">
+            <button
+              (click)="exportToCSV()"
+              class="px-3 py-1.5 border border-jira-border hover:text-jira-primary text-jira-textSecondary rounded text-sm transition-colors"
+            >
               Export CSV
             </button>
             
-            <button mat-button (click)="exportToJSON()">
-              <mat-icon>code</mat-icon>
+            <button
+              (click)="exportToJSON()"
+              class="px-3 py-1.5 border border-jira-border hover:text-jira-primary text-jira-textSecondary rounded text-sm transition-colors"
+            >
               Export JSON
             </button>
             
             <button
-              mat-raised-button
-              color="primary"
-              [disabled]="isCreatingTickets || getPendingCount() === 0"
               (click)="createJiraTickets()"
+              [disabled]="isCreatingTickets || selectedItems.size === 0"
+              class="px-4 py-2 bg-jira-primary hover:bg-jira-primaryHover disabled:bg-jira-textSecondary disabled:cursor-not-allowed text-white font-medium rounded transition-colors flex items-center gap-2"
             >
-              <mat-icon>send</mat-icon>
-              {{ isCreatingTickets ? 'Creating...' : 'Create Jira Tickets' }}
+              <svg *ngIf="isCreatingTickets" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span *ngIf="!isCreatingTickets && selectedItems.size === 0">Create Jira Tickets</span>
+              <span *ngIf="!isCreatingTickets && selectedItems.size > 0">Create {{ selectedItems.size }} Jira Ticket{{ selectedItems.size !== 1 ? 's' : '' }}</span>
+              <span *ngIf="isCreatingTickets">Creating...</span>
             </button>
-            
-            <mat-spinner *ngIf="isCreatingTickets" diameter="24" class="inline-spinner"></mat-spinner>
           </div>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
 
-    <!-- Action Items Cards -->
-    <div class="items-grid">
-      <mat-card *ngFor="let item of actionItems"
-                class="item-card"
-                [class.selected]="isSelected(item.id)"
-                [class.created]="item.jiraTicket"
-                [class.failed]="item.creationError && !item.jiraTicket">
-        <mat-card-header>
-          <div class="card-header-content">
-            <mat-checkbox
-              [checked]="isSelected(item.id)"
-              [disabled]="!!item.jiraTicket"
-              (change)="toggleSelection(item.id)"
-              class="item-checkbox"
-            ></mat-checkbox>
-            
-            <!-- Status Badges -->
-            <mat-chip *ngIf="item.jiraTicket" class="status-chip created-chip">
-              ✅ Created: {{ item.jiraTicket.key }}
-            </mat-chip>
-            
-            <mat-chip *ngIf="item.creationError && !item.jiraTicket" class="status-chip error-chip">
-              ❌ Failed
-            </mat-chip>
-
-            <mat-chip
-              *ngIf="!item.jiraTicket"
-              [class]="'confidence-chip ' + getConfidenceColor(item.confidenceScore)"
-            >
-              {{ getConfidenceLabel(item.confidenceScore) }} ({{ item.confidenceScore }}%)
-            </mat-chip>
-            
-            <a
-              *ngIf="item.jiraTicket"
-              mat-icon-button
-              color="primary"
-              [href]="item.jiraTicket.url"
-              target="_blank"
-              class="view-button"
-              title="View in Jira"
-            >
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-
-            <button
-              mat-icon-button
-              color="warn"
-              [disabled]="!!item.jiraTicket"
-              (click)="removeItem(item.id)"
-              class="remove-button"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </mat-card-header>
-
-        <mat-card-content>
-          <!-- Error Message -->
-          <div *ngIf="item.creationError" class="error-message">
-            <mat-icon>error</mat-icon>
-            <span>{{ item.creationError }}</span>
+      <!-- Items Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6 pb-8">
+        <div
+          *ngFor="let item of actionItems"
+          class="ticket-card bg-jira-card rounded-lg border shadow-[0_1px_3px_rgba(9,30,66,0.13)]"
+          [class.border-l-4]="true"
+          [class.border-jira-primary]="isSelected(item.id) && !item.jiraTicket && item.confidenceScore >= 70"
+          [class.border-jira-success]="item.jiraTicket"
+          [class.border-jira-border]="!isSelected(item.id) && !item.jiraTicket && item.confidenceScore >= 70"
+          [class.border-jira-warning]="item.confidenceScore < 70 && !item.jiraTicket"
+          [class.border-2]="item.confidenceScore < 70 || item.jiraTicket"
+        >
+          <!-- Low Confidence Warning Banner -->
+          <div *ngIf="item.confidenceScore < 70 && !item.jiraTicket" class="bg-jira-warningBg border-b border-jira-warning px-4 py-2">
+            <p class="text-jira-warning text-sm font-medium">⚠ Low confidence — please verify before pushing to Jira</p>
           </div>
 
-          <!-- Created Info -->
-          <div *ngIf="item.jiraTicket" class="created-info">
-            <mat-icon>check_circle</mat-icon>
-            <span>Created on {{ item.jiraTicket.createdAt | date:'short' }}</span>
-            <a [href]="item.jiraTicket.url" target="_blank" class="jira-link">
-              View {{ item.jiraTicket.key }} in Jira
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-          </div>
-
-          <!-- Title -->
-          <mat-form-field class="full-width">
-            <mat-label>Title</mat-label>
-            <input
-              matInput
-              [(ngModel)]="item.title"
-              [disabled]="!!item.jiraTicket"
-              (ngModelChange)="updateItem(item.id, 'title', $event)"
-              placeholder="Action item title"
-            />
-          </mat-form-field>
-
-          <!-- Description -->
-          <mat-form-field class="full-width">
-            <mat-label>Description</mat-label>
-            <textarea
-              matInput
-              [(ngModel)]="item.description"
-              [disabled]="!!item.jiraTicket"
-              (ngModelChange)="updateItem(item.id, 'description', $event)"
-              placeholder="Detailed description"
-              rows="3"
-            ></textarea>
-          </mat-form-field>
-
-          <!-- Assignee and Priority Row -->
-          <div class="form-row">
-            <mat-form-field class="half-width">
-              <mat-label>Assignee</mat-label>
-              <input
-                matInput
-                [(ngModel)]="item.assignee"
-                [disabled]="!!item.jiraTicket"
-                (ngModelChange)="updateItem(item.id, 'assignee', $event)"
-                placeholder="Assignee name"
-              />
-            </mat-form-field>
-
-            <mat-form-field class="half-width">
-              <mat-label>Priority</mat-label>
-              <mat-select
-                [(ngModel)]="item.priority"
-                [disabled]="!!item.jiraTicket"
-                (ngModelChange)="updateItem(item.id, 'priority', $event)"
+          <!-- Created Ticket Banner -->
+          <div *ngIf="item.jiraTicket" class="bg-jira-successBg px-4 py-2 border-b border-jira-success">
+            <div class="flex items-center justify-between">
+              <span class="text-jira-success font-medium">✓ {{ item.jiraTicket.key }} created</span>
+              <a
+                [href]="item.jiraTicket.url"
+                target="_blank"
+                class="text-jira-primary hover:text-jira-primaryHover text-sm font-medium flex items-center gap-1"
               >
-                <mat-option *ngFor="let priority of priorities" [value]="priority">
-                  {{ priority }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-
-          <!-- Due Date -->
-          <mat-form-field class="full-width">
-            <mat-label>Due Date</mat-label>
-            <input
-              matInput
-              [matDatepicker]="picker"
-              [(ngModel)]="item.dueDate"
-              [disabled]="!!item.jiraTicket"
-              (ngModelChange)="updateItem(item.id, 'dueDate', $event)"
-              placeholder="Select due date"
-            />
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
-
-          <!-- Source Quote -->
-          <div class="source-quote">
-            <div class="source-label">
-              <mat-icon>format_quote</mat-icon>
-              Source Quote
+                View in Jira →
+              </a>
             </div>
-            <p class="quote-text">{{ item.sourceQuote }}</p>
-            <p class="timestamp" *ngIf="item.timestamp">
-              <mat-icon>schedule</mat-icon>
-              {{ item.timestamp }}
-            </p>
           </div>
-        </mat-card-content>
-      </mat-card>
+
+          <!-- Card Header -->
+          <div class="p-6 border-b border-jira-border">
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div class="flex items-center gap-3">
+                <input
+                  *ngIf="!item.jiraTicket"
+                  type="checkbox"
+                  [checked]="isSelected(item.id)"
+                  (change)="toggleSelection(item.id)"
+                  class="w-5 h-5 rounded border-jira-border text-jira-primary focus:ring-2 focus:ring-jira-primary focus:ring-offset-0"
+                />
+                
+                <!-- Priority Badge -->
+                <span class="px-2 py-0.5 rounded text-xs font-medium border" [ngClass]="{
+                  'bg-red-50 text-jira-error border-red-200': item.priority === 'High',
+                  'bg-orange-50 text-jira-warning border-orange-200': item.priority === 'Medium',
+                  'bg-green-50 text-jira-success border-green-200': item.priority === 'Low'
+                }">
+                  {{ item.priority }}
+                </span>
+                
+                <!-- Confidence Badge -->
+                <span *ngIf="!item.jiraTicket" class="px-2 py-0.5 rounded text-xs font-medium" [ngClass]="{
+                  'bg-green-50 text-jira-success': item.confidenceScore >= 80,
+                  'bg-blue-50 text-jira-primary': item.confidenceScore >= 70 && item.confidenceScore < 80,
+                  'bg-jira-warningBg text-jira-warning': item.confidenceScore < 70
+                }">
+                  {{ getConfidenceLabel(item.confidenceScore) }}
+                </span>
+              </div>
+              
+              <button
+                *ngIf="!item.jiraTicket"
+                (click)="removeItem(item.id)"
+                class="text-jira-textSecondary hover:text-jira-error transition-colors"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="p-6 space-y-4">
+            <!-- Title -->
+            <div>
+              <label class="block text-sm font-medium text-jira-textSecondary mb-2">Title</label>
+              <input
+                type="text"
+                [(ngModel)]="item.title"
+                [disabled]="!!item.jiraTicket"
+                (ngModelChange)="updateItem(item.id, 'title', $event)"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-sm font-medium text-jira-textSecondary mb-2">Description</label>
+              <textarea
+                [(ngModel)]="item.description"
+                [disabled]="!!item.jiraTicket"
+                (ngModelChange)="updateItem(item.id, 'description', $event)"
+                rows="3"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+              ></textarea>
+            </div>
+
+            <!-- Assignee and Priority -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-jira-textSecondary mb-2">Assignee</label>
+                <input
+                  type="text"
+                  [(ngModel)]="item.assignee"
+                  [disabled]="!!item.jiraTicket"
+                  (ngModelChange)="updateItem(item.id, 'assignee', $event)"
+                  placeholder="Unassigned"
+                  class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-jira-textSecondary mb-2">Priority</label>
+                <select
+                  [(ngModel)]="item.priority"
+                  [disabled]="!!item.jiraTicket"
+                  (ngModelChange)="updateItem(item.id, 'priority', $event)"
+                  class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Due Date -->
+            <div>
+              <label class="block text-sm font-medium text-jira-textSecondary mb-2">Due Date</label>
+              <input
+                type="date"
+                [(ngModel)]="item.dueDate"
+                [disabled]="!!item.jiraTicket"
+                (ngModelChange)="updateItem(item.id, 'dueDate', $event)"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <!-- Source Quote -->
+            <div class="border-l-4 border-jira-primary bg-blue-50 rounded-r-lg p-4">
+              <div class="flex items-center gap-2 text-jira-textSecondary text-xs mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                </svg>
+                <span>Source Quote</span>
+              </div>
+              <p class="text-jira-textPrimary text-sm italic">{{ item.sourceQuote }}</p>
+              <p *ngIf="item.timestamp" class="text-jira-textSecondary text-xs mt-2">{{ item.timestamp }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -1,114 +1,241 @@
-<div class="upload-container">
-  <mat-card class="upload-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>cloud_upload</mat-icon>
-        Upload Meeting Transcript
-      </mat-card-title>
-    </mat-card-header>
+<div class="min-h-screen bg-jira-bg p-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
+      
+      <!-- LEFT COLUMN - Jira Config Summary -->
+      <div class="lg:col-span-1">
+        <div class="bg-jira-card rounded-lg border border-jira-border p-6 shadow-[0_1px_3px_rgba(9,30,66,0.13)] h-full flex flex-col">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-jira-textPrimary">Jira Connection</h2>
+            <button
+              *ngIf="jiraConfig && !isEditingConfig"
+              (click)="toggleEditConfig()"
+              class="text-jira-primary hover:text-jira-primaryHover text-sm cursor-pointer font-medium"
+            >
+              Edit
+            </button>
+          </div>
+          
+          <!-- Summary View -->
+          <div *ngIf="jiraConfig && !isEditingConfig" class="space-y-3 flex-1">
+            <div class="flex items-center gap-2 text-jira-success">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span class="font-medium">Connected</span>
+            </div>
+            
+            <div class="space-y-2 text-sm">
+              <div>
+                <span class="text-jira-textSecondary">Domain:</span>
+                <p class="text-jira-textPrimary font-medium">{{ jiraConfig.domain }}</p>
+              </div>
+              <div>
+                <span class="text-jira-textSecondary">Project:</span>
+                <p class="text-jira-textPrimary font-medium">{{ jiraConfig.projectKey }}</p>
+              </div>
+            </div>
+          </div>
 
-    <mat-card-content>
-      <!-- Drag and Drop Zone -->
-      <div
-        class="drop-zone"
-        [class.dragging]="isDragging"
-        [class.has-file]="selectedFile"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave($event)"
-        (drop)="onDrop($event)"
-        (click)="fileInput.click()"
-      >
-        <mat-icon class="upload-icon">{{ selectedFile ? 'description' : 'cloud_upload' }}</mat-icon>
-        
-        <div *ngIf="!selectedFile" class="drop-zone-text">
-          <p class="primary-text">Drag and drop your transcript here</p>
-          <p class="secondary-text">or click to browse</p>
-          <p class="supported-text">Supported formats: {{ supportedExtensions.join(', ') }}</p>
+          <!-- Edit Form -->
+          <div *ngIf="isEditingConfig" class="space-y-4 flex-1">
+            <div>
+              <label class="block text-sm font-medium text-jira-textPrimary mb-1">Domain</label>
+              <input
+                type="text"
+                [(ngModel)]="editConfig.domain"
+                placeholder="yourcompany.atlassian.net"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-jira-textPrimary mb-1">Email</label>
+              <input
+                type="email"
+                [(ngModel)]="editConfig.email"
+                placeholder="your.email@company.com"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-jira-textPrimary mb-1">API Token</label>
+              <input
+                type="password"
+                [(ngModel)]="editConfig.apiToken"
+                placeholder="Your API token"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-jira-textPrimary mb-1">Project Key</label>
+              <input
+                type="text"
+                [(ngModel)]="editConfig.projectKey"
+                placeholder="SCRUM"
+                class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none text-sm"
+              />
+            </div>
+            <div class="flex gap-2 pt-2">
+              <button
+                (click)="saveConfig()"
+                [disabled]="!isFormValid()"
+                class="flex-1 bg-jira-primary hover:bg-jira-primaryHover disabled:bg-jira-textSecondary text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Save
+              </button>
+              <button
+                (click)="cancelEdit()"
+                class="flex-1 border border-jira-border hover:bg-jira-bg text-jira-textPrimary py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="!jiraConfig" class="text-center py-4 flex-1 flex flex-col justify-center">
+            <p class="text-jira-textSecondary text-sm mb-3">Not configured</p>
+            <a routerLink="/setup" class="text-jira-primary hover:text-jira-primaryHover text-sm font-medium">
+              Configure Jira →
+            </a>
+          </div>
         </div>
-
-        <div *ngIf="selectedFile" class="file-info">
-          <p class="file-name">{{ selectedFile.name }}</p>
-          <p class="file-size">{{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
-        </div>
-
-        <input
-          #fileInput
-          type="file"
-          [accept]="supportedExtensions.join(',')"
-          (change)="onFileSelected($event)"
-          style="display: none"
-        />
       </div>
 
-      <!-- Upload Progress -->
-      <div *ngIf="isUploading" class="progress-section">
-        <p>Uploading transcript...</p>
-        <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
-        <p class="progress-text">{{ uploadProgress }}%</p>
+      <!-- RIGHT COLUMN - Upload Card -->
+      <div class="lg:col-span-2">
+        <div class="bg-jira-card rounded-lg border border-jira-border p-8 shadow-[0_1px_3px_rgba(9,30,66,0.13)]">
+          <h2 class="text-2xl font-semibold text-jira-textPrimary mb-6">Upload Transcript</h2>
+          
+          <!-- Drag and Drop Zone -->
+          <div class="border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer" [ngClass]="{
+            'border-jira-primary bg-blue-50': isDragging,
+            'border-jira-border bg-jira-bg hover:bg-blue-50': !isDragging && !selectedFile,
+            'border-jira-success bg-jira-successBg': selectedFile && !isDragging
+          }" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" (click)="fileInput.click()">
+            <svg *ngIf="!selectedFile" class="w-16 h-16 mx-auto mb-4 text-jira-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+            
+            <svg *ngIf="selectedFile" class="w-16 h-16 mx-auto mb-4 text-jira-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+
+            <div *ngIf="!selectedFile">
+              <p class="text-xl text-jira-textPrimary mb-2">Drag and drop your transcript here</p>
+              <p class="text-jira-textSecondary text-sm mb-4">or click to browse</p>
+              <div class="flex items-center justify-center gap-2">
+                <span class="px-2 py-1 bg-blue-50 text-jira-primary text-xs rounded border border-blue-200">.vtt</span>
+                <span class="px-2 py-1 bg-blue-50 text-jira-primary text-xs rounded border border-blue-200">.docx</span>
+              </div>
+            </div>
+
+            <div *ngIf="selectedFile">
+              <p class="text-xl text-jira-textPrimary font-semibold mb-2">{{ selectedFile.name }}</p>
+              <p class="text-jira-textSecondary mb-2">{{ formatFileSize(selectedFile.size) }}</p>
+              <div class="flex items-center justify-center gap-2 text-sm">
+                <span class="text-jira-textSecondary">Detected language:</span>
+                <span class="text-jira-textPrimary">🇺🇸 {{ detectedLanguage }}</span>
+              </div>
+            </div>
+
+            <input
+              #fileInput
+              type="file"
+              [accept]="supportedExtensions.join(',')"
+              (change)="onFileSelected($event)"
+              class="hidden"
+            />
+          </div>
+
+          <!-- Upload Progress -->
+          <div *ngIf="isUploading" class="mt-6">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-jira-textSecondary">Uploading...</span>
+              <span class="text-sm text-jira-textPrimary font-semibold">{{ uploadProgress }}%</span>
+            </div>
+            <div class="w-full bg-jira-bg rounded-full h-2">
+              <div class="bg-jira-primary h-2 rounded-full transition-all" [style.width.%]="uploadProgress"></div>
+            </div>
+          </div>
+
+          <!-- Extract Button -->
+          <button
+            *ngIf="transcript && !isExtracting"
+            (click)="extractActionItems()"
+            class="w-full mt-6 bg-jira-primary hover:bg-jira-primaryHover text-white font-medium py-2 px-6 rounded transition-colors"
+          >
+            Extract Action Items
+          </button>
+
+          <!-- Processing Steps -->
+          <div *ngIf="isExtracting" class="mt-8 bg-jira-bg rounded-lg p-4 space-y-4">
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 mt-1">
+                <svg *ngIf="!processingSteps.parsing" class="animate-spin h-5 w-5 text-jira-primary" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg *ngIf="processingSteps.parsing" class="h-5 w-5 text-jira-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-jira-textPrimary font-medium">📄 Parsing transcript...</p>
+                <p class="text-sm text-jira-textSecondary">Reading and structuring the content</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3" [class.opacity-50]="!processingSteps.parsing">
+              <div class="flex-shrink-0 mt-1">
+                <svg *ngIf="processingSteps.parsing && !processingSteps.analyzing" class="animate-spin h-5 w-5 text-jira-primary" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg *ngIf="processingSteps.analyzing" class="h-5 w-5 text-jira-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div *ngIf="!processingSteps.parsing" class="h-5 w-5 rounded-full border-2 border-jira-textSecondary"></div>
+              </div>
+              <div>
+                <p [class.text-jira-primary]="processingSteps.parsing" [class.text-jira-textSecondary]="!processingSteps.parsing" class="font-medium">🤖 Analyzing with IBM watsonx...</p>
+                <p class="text-sm text-jira-textSecondary">Extracting action items using AI</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3" [class.opacity-50]="!processingSteps.analyzing">
+              <div class="flex-shrink-0 mt-1">
+                <svg *ngIf="processingSteps.analyzing && !processingSteps.complete" class="animate-spin h-5 w-5 text-jira-primary" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <svg *ngIf="processingSteps.complete" class="h-5 w-5 text-jira-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <div *ngIf="!processingSteps.analyzing" class="h-5 w-5 rounded-full border-2 border-jira-textSecondary"></div>
+              </div>
+              <div>
+                <p [class.text-jira-success]="processingSteps.complete" [class.text-jira-textSecondary]="!processingSteps.complete" class="font-medium">
+                  <span *ngIf="!processingSteps.complete">✅ Finalizing extraction...</span>
+                  <span *ngIf="processingSteps.complete">✅ Extraction complete! {{ extractedCount }} items found</span>
+                </p>
+                <p class="text-sm text-jira-textSecondary">Ready for review</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reset Button -->
+          <button
+            *ngIf="selectedFile && !isUploading && !isExtracting"
+            (click)="reset()"
+            class="w-full mt-4 border border-jira-border hover:border-jira-textSecondary text-jira-textSecondary hover:text-jira-textPrimary font-medium py-3 px-6 rounded transition-colors"
+          >
+            Reset
+          </button>
+        </div>
       </div>
-
-      <!-- Transcript Preview -->
-      <div *ngIf="transcript && !isUploading" class="transcript-preview">
-        <h3>Transcript Preview</h3>
-        <div class="preview-stats">
-          <div class="stat">
-            <mat-icon>people</mat-icon>
-            <span>{{ transcript.speakers.length }} speakers</span>
-          </div>
-          <div class="stat">
-            <mat-icon>chat</mat-icon>
-            <span>{{ transcript.entries.length }} entries</span>
-          </div>
-          <div class="stat" *ngIf="transcript.metadata.duration">
-            <mat-icon>schedule</mat-icon>
-            <span>{{ transcript.metadata.duration }}</span>
-          </div>
-        </div>
-
-        <div class="speakers-list">
-          <h4>Speakers:</h4>
-          <mat-chip-set>
-            <mat-chip *ngFor="let speaker of transcript.speakers">{{ speaker }}</mat-chip>
-          </mat-chip-set>
-        </div>
-
-        <div class="transcript-entries">
-          <h4>Sample Entries:</h4>
-          <div class="entry" *ngFor="let entry of transcript.entries.slice(0, 5)">
-            <span class="timestamp" *ngIf="entry.timestamp">{{ entry.timestamp }}</span>
-            <span class="speaker">{{ entry.speaker }}:</span>
-            <span class="text">{{ entry.text }}</span>
-          </div>
-          <p *ngIf="transcript.entries.length > 5" class="more-entries">
-            ... and {{ transcript.entries.length - 5 }} more entries
-          </p>
-        </div>
-      </div>
-    </mat-card-content>
-
-    <mat-card-actions>
-      <button
-        mat-raised-button
-        color="primary"
-        [disabled]="!transcript || isExtracting"
-        (click)="extractActionItems()"
-      >
-        <mat-icon>psychology</mat-icon>
-        {{ isExtracting ? 'Extracting...' : 'Extract Action Items' }}
-      </button>
-
-      <button
-        mat-button
-        [disabled]="!selectedFile || isUploading || isExtracting"
-        (click)="reset()"
-      >
-        <mat-icon>refresh</mat-icon>
-        Reset
-      </button>
-
-      <mat-spinner *ngIf="isExtracting" diameter="24" class="inline-spinner"></mat-spinner>
-    </mat-card-actions>
-  </mat-card>
+    </div>
+  </div>
 </div>
+
 
 <!-- Made with Bob -->

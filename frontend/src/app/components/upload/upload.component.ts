@@ -1,31 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
 import { HttpEventType } from '@angular/common/http';
 
 import { ApiService, ParsedTranscript } from '../../services/api.service';
 import { StateService } from '../../services/state.service';
+import { ToastService } from '../../services/toast.service';
+import { JiraConfig } from '../../models/action-item.model';
 
 @Component({
   selector: 'app-upload',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressBarModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatChipsModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './upload.component.html',
   styleUrls: ['./upload.component.css']
 })
@@ -37,12 +24,27 @@ export class UploadComponent implements OnInit {
   selectedFile: File | null = null;
   transcript: ParsedTranscript | null = null;
   supportedExtensions: string[] = ['.vtt', '.docx'];
+  isEditingConfig = false;
+  editConfig: JiraConfig = {
+    domain: '',
+    email: '',
+    apiToken: '',
+    projectKey: ''
+  };
+  
+  // Processing steps
+  processingSteps = {
+    parsing: false,
+    analyzing: false,
+    complete: false
+  };
+  extractedCount = 0;
 
   constructor(
     private apiService: ApiService,
     private stateService: StateService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -57,6 +59,16 @@ export class UploadComponent implements OnInit {
         console.error('Failed to load supported types', error);
       }
     });
+  }
+
+  get jiraConfig() {
+    return this.stateService.getJiraConfig();
+  }
+
+  get detectedLanguage(): string {
+    // Simple language detection based on file name or content
+    // For now, return a default
+    return 'English';
   }
 
   onDragOver(event: DragEvent): void {
@@ -93,10 +105,9 @@ export class UploadComponent implements OnInit {
     // Validate file type
     const extension = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!this.supportedExtensions.includes(extension)) {
-      this.snackBar.open(
-        `Invalid file type. Supported: ${this.supportedExtensions.join(', ')}`,
-        'Close',
-        { duration: 5000 }
+      this.toastService.error(
+        'Invalid File Type',
+        `Supported formats: ${this.supportedExtensions.join(', ')}`
       );
       return;
     }
@@ -111,6 +122,7 @@ export class UploadComponent implements OnInit {
     this.isUploading = true;
     this.uploadProgress = 0;
     this.transcript = null;
+    this.processingSteps = { parsing: false, analyzing: false, complete: false };
 
     this.apiService.uploadTranscript(this.selectedFile).subscribe({
       next: (event) => {
@@ -123,15 +135,15 @@ export class UploadComponent implements OnInit {
           if (event.body?.success && event.body.data) {
             this.transcript = event.body.data;
             this.stateService.setTranscript(this.transcript);
-            this.snackBar.open('Transcript uploaded successfully!', 'Close', { duration: 3000 });
+            this.toastService.success('Upload Complete', 'Transcript uploaded successfully');
           } else {
-            this.snackBar.open(event.body?.error || 'Upload failed', 'Close', { duration: 5000 });
+            this.toastService.error('Upload Failed', event.body?.error || 'Unknown error');
           }
         }
       },
       error: (error) => {
         this.isUploading = false;
-        this.snackBar.open('Upload failed: ' + error.message, 'Close', { duration: 5000 });
+        this.toastService.error('Upload Failed', error.message);
       }
     });
   }
@@ -140,7 +152,13 @@ export class UploadComponent implements OnInit {
     if (!this.transcript) return;
 
     this.isExtracting = true;
+    this.processingSteps.parsing = true;
     this.stateService.setLoading(true);
+
+    // Simulate parsing step
+    setTimeout(() => {
+      this.processingSteps.analyzing = true;
+    }, 1000);
 
     this.apiService.extractActionItems(this.transcript).subscribe({
       next: (response) => {
@@ -148,21 +166,29 @@ export class UploadComponent implements OnInit {
         this.stateService.setLoading(false);
 
         if (response.success && response.data) {
-          this.stateService.setActionItems(response.data.items);
-          this.snackBar.open(
-            `Extracted ${response.data.totalCount} action items!`,
-            'Close',
-            { duration: 3000 }
-          );
-          this.router.navigate(['/review']);
+          this.processingSteps.complete = true;
+          this.extractedCount = response.data.totalCount;
+          const items = response.data.items;
+          const count = response.data.totalCount;
+          
+          setTimeout(() => {
+            this.stateService.setActionItems(items);
+            this.toastService.success(
+              'Extraction Complete',
+              `${count} action items found`
+            );
+            this.router.navigate(['/review']);
+          }, 1000);
         } else {
-          this.snackBar.open(response.error || 'Extraction failed', 'Close', { duration: 5000 });
+          this.processingSteps = { parsing: false, analyzing: false, complete: false };
+          this.toastService.error('Extraction Failed', response.error || 'Unknown error');
         }
       },
       error: (error) => {
         this.isExtracting = false;
         this.stateService.setLoading(false);
-        this.snackBar.open('Extraction failed: ' + error.message, 'Close', { duration: 5000 });
+        this.processingSteps = { parsing: false, analyzing: false, complete: false };
+        this.toastService.error('Extraction Failed', error.message);
       }
     });
   }
@@ -171,7 +197,49 @@ export class UploadComponent implements OnInit {
     this.selectedFile = null;
     this.transcript = null;
     this.uploadProgress = 0;
+    this.processingSteps = { parsing: false, analyzing: false, complete: false };
+    this.extractedCount = 0;
     this.stateService.reset();
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  toggleEditConfig(): void {
+    if (!this.isEditingConfig) {
+      // Entering edit mode - copy current config
+      const currentConfig = this.jiraConfig;
+      if (currentConfig) {
+        this.editConfig = { ...currentConfig };
+      }
+    }
+    this.isEditingConfig = !this.isEditingConfig;
+  }
+
+  saveConfig(): void {
+    if (this.isFormValid()) {
+      this.stateService.setJiraConfig(this.editConfig);
+      this.isEditingConfig = false;
+      this.toastService.success('Configuration Updated', 'Your Jira settings have been saved');
+    } else {
+      this.toastService.error('Validation Error', 'Please fill in all fields');
+    }
+  }
+
+  cancelEdit(): void {
+    this.isEditingConfig = false;
+  }
+
+  isFormValid(): boolean {
+    return !!(
+      this.editConfig.domain &&
+      this.editConfig.email &&
+      this.editConfig.apiToken &&
+      this.editConfig.projectKey
+    );
   }
 }
 
