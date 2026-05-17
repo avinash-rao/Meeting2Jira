@@ -1,5 +1,6 @@
 import mammoth from 'mammoth';
 import { ParsedTranscript, TranscriptEntry } from '../types';
+import { franc } from 'franc';
 
 /**
  * Parse DOCX transcript files
@@ -9,6 +10,21 @@ import { ParsedTranscript, TranscriptEntry } from '../types';
  * - Timestamped entries
  */
 export class DOCXParser {
+  private static readonly LANGUAGE_NAMES: { [key: string]: string } = {
+    'eng': 'English',
+    'fra': 'French',
+    'spa': 'Spanish',
+    'deu': 'German',
+    'ita': 'Italian',
+    'por': 'Portuguese',
+    'rus': 'Russian',
+    'jpn': 'Japanese',
+    'kor': 'Korean',
+    'cmn': 'Chinese',
+    'ara': 'Arabic',
+    'hin': 'Hindi',
+    'und': 'Unknown'
+  };
   /**
    * Parse DOCX file buffer into structured transcript
    */
@@ -119,11 +135,17 @@ export class DOCXParser {
       speakersSet.add(currentSpeaker);
     }
     
+    // Detect language from transcript text
+    const allText = entries.map(e => e.text).join(' ');
+    const langCode = franc(allText, { minLength: 10 });
+    const language = this.LANGUAGE_NAMES[langCode] || 'Unknown';
+    
     return {
       speakers: Array.from(speakersSet),
       entries,
       metadata: {
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        language
       }
     };
   }

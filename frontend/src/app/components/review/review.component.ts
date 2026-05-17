@@ -76,6 +76,14 @@ export class ReviewComponent implements OnInit {
     return selectableItems.length > 0 && this.selectedItems.size === selectableItems.length;
   }
 
+  get createdCount(): number {
+    return this.actionItems.filter(item => item.jiraTicket).length;
+  }
+
+  get pendingCount(): number {
+    return this.actionItems.length - this.createdCount;
+  }
+
   getConfidenceClass(score: number): string {
     if (score >= 80) return 'high';
     if (score >= 70) return 'good';
@@ -90,6 +98,13 @@ export class ReviewComponent implements OnInit {
 
   updateItem(id: string, field: keyof ActionItem, value: any): void {
     this.stateService.updateActionItem(id, { [field]: value });
+  }
+
+  onAssigneeChange(item: ActionItem): void {
+    // Clear error when user edits assignee field
+    if (item.creationError) {
+      this.stateService.updateActionItem(item.id, { creationError: undefined });
+    }
   }
 
   removeItem(id: string): void {

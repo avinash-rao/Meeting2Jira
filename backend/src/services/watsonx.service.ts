@@ -125,7 +125,10 @@ GUIDELINES:
 - Assignee must be one of the meeting participants: ${speakersList}
 - If no specific person is assigned, use the person who mentioned the task
 - Priority: High (urgent/critical), Medium (important), Low (nice to have)
-- Confidence score: 80-100 (explicit), 60-79 (implied), 40-59 (uncertain)
+- Confidence score (use these exact ranges):
+  * 80-100: Explicit clear assignment with confirmation (e.g., "John will handle this", "I'll take care of it")
+  * 70-79: Implied or partially confirmed assignment (e.g., "John mentioned he could look into this", "Sounds like Sarah's area")
+  * 40-69: Vague, uncertain, no clear owner or commitment (e.g., "Someone should check this", "We might need to...")
 - Include the exact quote that supports each action item
 - If a due date is mentioned, extract it; otherwise leave as null
 - Return ONLY the JSON object, no additional text or markdown`;

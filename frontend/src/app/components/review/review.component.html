@@ -46,6 +46,18 @@
               />
               <span class="text-jira-textPrimary font-medium">Select All</span>
             </label>
+            
+            <!-- Status Badges -->
+            <div class="flex items-center gap-2">
+              <span style="background: #EAF3DE; border: 1px solid #C0DD97; color: #3B6D11; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="ti ti-circle-check" aria-hidden="true"></i>
+                {{ createdCount }} created
+              </span>
+              <span style="background: #FAEEDA; border: 1px solid #FAC775; color: #854F0B; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="ti ti-hourglass" aria-hidden="true"></i>
+                {{ pendingCount }} pending
+              </span>
+            </div>
           </div>
           
           <div class="flex items-center gap-3">
@@ -89,12 +101,16 @@
           [class.border-jira-primary]="isSelected(item.id) && !item.jiraTicket && item.confidenceScore >= 70"
           [class.border-jira-success]="item.jiraTicket"
           [class.border-jira-border]="!isSelected(item.id) && !item.jiraTicket && item.confidenceScore >= 70"
-          [class.border-jira-warning]="item.confidenceScore < 70 && !item.jiraTicket"
-          [class.border-2]="item.confidenceScore < 70 || item.jiraTicket"
+          [ngClass]="{'border-2': item.confidenceScore < 70 && !item.jiraTicket}"
+          [ngStyle]="{'border-color': item.confidenceScore < 70 && !item.jiraTicket ? '#EF9F27' : ''}"
         >
           <!-- Low Confidence Warning Banner -->
-          <div *ngIf="item.confidenceScore < 70 && !item.jiraTicket" class="bg-jira-warningBg border-b border-jira-warning px-4 py-2">
-            <p class="text-jira-warning text-sm font-medium">⚠ Low confidence — please verify before pushing to Jira</p>
+          <div *ngIf="item.confidenceScore < 70 && !item.jiraTicket"
+               style="background: #FAEEDA; border-bottom: 0.5px solid #FAC775; margin: -16px -16px 12px -16px; padding: 8px 16px; border-radius: 8px 8px 0 0;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #854F0B; font-weight: 500;">
+              <span style="font-size: 14px;">⚠️</span>
+              <span>AI wasn't certain — verify before pushing to Jira</span>
+            </div>
           </div>
 
           <!-- Created Ticket Banner -->
@@ -149,22 +165,21 @@
                   class="w-5 h-5 rounded border-jira-border text-jira-primary focus:ring-2 focus:ring-jira-primary focus:ring-offset-0"
                 />
                 
-                <!-- Priority Badge -->
-                <span class="px-2 py-0.5 rounded text-xs font-medium border" [ngClass]="{
-                  'bg-red-50 text-jira-error border-red-200': item.priority === 'High',
-                  'bg-orange-50 text-jira-warning border-orange-200': item.priority === 'Medium',
-                  'bg-green-50 text-jira-success border-green-200': item.priority === 'Low'
-                }">
-                  {{ item.priority }}
-                </span>
-                
                 <!-- Confidence Badge -->
-                <span *ngIf="!item.jiraTicket" class="px-2 py-0.5 rounded text-xs font-medium" [ngClass]="{
-                  'bg-green-50 text-jira-success': item.confidenceScore >= 80,
-                  'bg-blue-50 text-jira-primary': item.confidenceScore >= 70 && item.confidenceScore < 80,
-                  'bg-jira-warningBg text-jira-warning': item.confidenceScore < 70
-                }">
-                  {{ getConfidenceLabel(item.confidenceScore) }}
+                <span *ngIf="!item.jiraTicket"
+                      [ngStyle]="{
+                        'background': item.confidenceScore >= 80 ? '#EAF3DE' : (item.confidenceScore >= 70 ? '#E6F1FB' : '#FAEEDA'),
+                        'color': item.confidenceScore >= 80 ? '#3B6D11' : (item.confidenceScore >= 70 ? '#185FA5' : '#854F0B'),
+                        'border': '1px solid ' + (item.confidenceScore >= 80 ? '#C0DD97' : (item.confidenceScore >= 70 ? '#B5D4F4' : '#FAC775')),
+                        'font-size': '14px',
+                        'font-weight': '500',
+                        'padding': '5px 14px',
+                        'border-radius': '999px',
+                        'display': 'inline-flex',
+                        'align-items': 'center',
+                        'gap': '6px'
+                      }">
+                  {{ item.confidenceScore >= 80 ? 'High' : (item.confidenceScore >= 70 ? 'Medium' : 'Low') }} ({{ item.confidenceScore }}%)
                 </span>
               </div>
               
@@ -214,6 +229,7 @@
                   type="text"
                   [(ngModel)]="item.assignee"
                   [disabled]="!!item.jiraTicket"
+                  (ngModelChange)="onAssigneeChange(item)"
                   (blur)="updateItem(item.id, 'assignee', item.assignee)"
                   placeholder="Unassigned"
                   class="w-full border border-jira-border rounded px-3 py-2 text-jira-textPrimary placeholder-jira-textSecondary focus:border-jira-primary focus:ring-1 focus:ring-jira-primary outline-none disabled:opacity-50 disabled:cursor-not-allowed"

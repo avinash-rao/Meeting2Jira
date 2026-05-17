@@ -132,9 +132,9 @@
             <div *ngIf="selectedFile">
               <p class="text-xl text-jira-textPrimary font-semibold mb-2">{{ selectedFile.name }}</p>
               <p class="text-jira-textSecondary mb-2">{{ formatFileSize(selectedFile.size) }}</p>
-              <div class="flex items-center justify-center gap-2 text-sm">
+              <div *ngIf="transcript" class="flex items-center justify-center gap-2 text-sm">
                 <span class="text-jira-textSecondary">Detected language:</span>
-                <span class="text-jira-textPrimary">🇺🇸 {{ detectedLanguage }}</span>
+                <span class="text-jira-textPrimary">{{ languageFlag }} {{ detectedLanguage }}</span>
               </div>
             </div>
 

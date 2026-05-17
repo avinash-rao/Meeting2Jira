@@ -1,14 +1,30 @@
 import { ParsedTranscript, TranscriptEntry } from '../types';
+import { franc } from 'franc';
 
 /**
  * Parse VTT (WebVTT) transcript files
  * Format example:
  * WEBVTT
- * 
+ *
  * 00:00:00.000 --> 00:00:05.000
  * <v Speaker Name>Dialogue text here
  */
 export class VTTParser {
+  private static readonly LANGUAGE_NAMES: { [key: string]: string } = {
+    'eng': 'English',
+    'fra': 'French',
+    'spa': 'Spanish',
+    'deu': 'German',
+    'ita': 'Italian',
+    'por': 'Portuguese',
+    'rus': 'Russian',
+    'jpn': 'Japanese',
+    'kor': 'Korean',
+    'cmn': 'Chinese',
+    'ara': 'Arabic',
+    'hin': 'Hindi',
+    'und': 'Unknown'
+  };
   /**
    * Parse VTT file content into structured transcript
    */
@@ -83,12 +99,18 @@ export class VTTParser {
       duration = entries[entries.length - 1].timestamp;
     }
     
+    // Detect language from transcript text
+    const allText = entries.map(e => e.text).join(' ');
+    const langCode = franc(allText, { minLength: 10 });
+    const language = this.LANGUAGE_NAMES[langCode] || 'Unknown';
+    
     return {
       speakers: Array.from(speakersSet),
       entries,
       metadata: {
         duration,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        language
       }
     };
   }

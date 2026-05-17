@@ -12,6 +12,7 @@ export interface ParsedTranscript {
     duration?: string;
     date?: string;
     fileName?: string;
+    language?: string;
   };
 }
 
