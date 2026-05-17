@@ -14,9 +14,10 @@ npm install
 cp .env.example .env
 ```
 
-3. Add your OpenAI API key to `.env`:
+3. Add your WatsonX AI credentials to `.env`:
 ```
-OPENAI_API_KEY=sk-your-key-here
+WATSONX_API_KEY=your-api-key-here
+WATSONX_PROJECT_ID=your-project-id-here
 ```
 
 ## Development

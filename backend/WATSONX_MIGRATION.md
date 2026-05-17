@@ -15,7 +15,8 @@ Phase 2 has been updated to use **IBM watsonx.ai** instead of OpenAI for AI-powe
 ### 2. Environment Variables
 **Old (.env):**
 ```env
-OPENAI_API_KEY=sk-your-openai-api-key-here
+# Old OpenAI configuration (removed)
+# OPENAI_API_KEY=sk-your-openai-api-key-here
 ```
 
 **New (.env):**
@@ -120,8 +121,8 @@ Expected response:
 ## Key Differences
 
 ### Response Format
-**OpenAI:**
-- Returns structured JSON directly
+**OpenAI (Previous):**
+- Returned structured JSON directly
 - Uses `response_format: { type: 'json_object' }`
 
 **watsonx.ai:**
@@ -130,7 +131,7 @@ Expected response:
 - More flexible but needs parsing
 
 ### Model Parameters
-**OpenAI:**
+**OpenAI (Previous):**
 ```javascript
 {
   model: 'gpt-4o',
@@ -154,7 +155,7 @@ Expected response:
 ```
 
 ### Error Messages
-**OpenAI:**
+**OpenAI (Previous):**
 - "OPENAI_API_KEY environment variable is required"
 - "Failed to connect to OpenAI API"
 
@@ -206,7 +207,7 @@ npm install
 
 ### Expected Response Times
 - Connection test: < 2 seconds
-- Action item extraction: 5-10 seconds (may be slower than OpenAI)
+- Action item extraction: 5-10 seconds (comparable to OpenAI GPT-4o)
 - Depends on model load and region
 
 ### Model Capabilities

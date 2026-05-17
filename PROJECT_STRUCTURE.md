@@ -89,7 +89,7 @@ meeting2jira/
 4. Create upload endpoint with multer
 
 ### Phase 2: AI Integration (Day 1 Afternoon)
-1. Integrate OpenAI API
+1. Integrate IBM watsonx.ai API
 2. Design extraction prompts
 3. Create extraction service
 4. Test with sample transcripts
@@ -118,7 +118,7 @@ meeting2jira/
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Language**: TypeScript
-- **AI**: OpenAI GPT-4o
+- **AI**: IBM watsonx.ai (Llama 3.3 70B Instruct)
 - **File Upload**: Multer
 - **Document Parsing**: Mammoth (DOCX)
 - **HTTP Client**: Axios (for Jira API)
@@ -141,7 +141,8 @@ meeting2jira/
 ```
 PORT=3000
 NODE_ENV=development
-OPENAI_API_KEY=sk-...
+WATSONX_API_KEY=your-api-key
+WATSONX_PROJECT_ID=your-project-id
 CORS_ORIGIN=http://localhost:4200
 MAX_FILE_SIZE=10485760
 UPLOAD_DIR=./uploads
@@ -193,7 +194,7 @@ npm run build        # Build for production
 
 **Prerequisites for next phase**:
 - Node.js and npm must be installed
-- OpenAI API key required
+- IBM watsonx.ai API key and project ID required
 - Jira account for testing (optional for initial development)
 
 ## Notes
