@@ -126,6 +126,11 @@ export class JiraService {
    */
   async createTicket(actionItem: ActionItem, assigneeAccountId?: string): Promise<JiraTicket> {
     try {
+      // If assignee was specified but not found, throw specific error
+      if (actionItem.assignee && actionItem.assignee !== 'Unassigned' && !assigneeAccountId) {
+        throw new Error(`ASSIGNEE_NOT_FOUND: Could not find Jira user matching "${actionItem.assignee}". Please check the name or leave unassigned.`);
+      }
+
       const issueData = {
         fields: {
           project: {
@@ -229,8 +234,8 @@ export class JiraService {
    * Create multiple Jira tickets from action items
    */
   async createTickets(actionItems: ActionItem[]): Promise<JiraCreateResponse> {
-    const created: JiraTicket[] = [];
-    const failed: Array<{ item: ActionItem; error: string }> = [];
+    const created: Array<JiraTicket & { itemId: string }> = [];
+    const failed: Array<{ itemId: string; item: ActionItem; error: string }> = [];
 
     for (const item of actionItems) {
       try {
@@ -247,9 +252,13 @@ export class JiraService {
         }
 
         const ticket = await this.createTicket(item, assigneeAccountId);
-        created.push(ticket);
+        created.push({
+          ...ticket,
+          itemId: item.id
+        });
       } catch (error: any) {
         failed.push({
+          itemId: item.id,
           item,
           error: error.message
         });

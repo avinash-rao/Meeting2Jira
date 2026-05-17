@@ -32,6 +32,12 @@ export class ReviewComponent implements OnInit {
   ngOnInit(): void {
     this.stateService.actionItems$.subscribe(items => {
       this.actionItems = items;
+      
+      // Redirect to upload page if no items
+      if (items.length === 0) {
+        this.toastService.info('No Action Items', 'Please upload a transcript first');
+        this.router.navigate(['/upload']);
+      }
     });
     
     this.transcript = this.stateService.getTranscript();
@@ -116,19 +122,25 @@ export class ReviewComponent implements OnInit {
       next: (response) => {
         this.isCreatingTickets = false;
         
-        if (response.success && response.data) {
+        if (response && response.data) {
           const { created, failed } = response.data;
           
-          created.forEach((ticket, index) => {
-            const item = itemsToCreate[index];
+          // Process successful creations - match by item ID from response
+          created.forEach((ticket: any) => {
+            // Find the item by matching the ticket's item reference
+            const item = itemsToCreate.find(i => i.id === ticket.itemId);
             if (item) {
               this.stateService.updateActionItem(item.id, {
                 jiraTicket: {
                   key: ticket.key,
                   url: ticket.url || `https://${config.domain}/browse/${ticket.key}`,
                   createdAt: new Date().toISOString()
-                }
+                },
+                creationError: undefined // Clear any previous errors
               });
+              
+              // Remove from selection
+              this.selectedItems.delete(item.id);
               
               // Show individual success toast with link
               this.toastService.success(
@@ -142,26 +154,47 @@ export class ReviewComponent implements OnInit {
             }
           });
 
+          // Process failures - match by item ID from response
           failed.forEach((failure: any) => {
-            const item = this.actionItems.find(i => i.id === failure.item?.id);
+            const item = itemsToCreate.find(i => i.id === failure.itemId);
             if (item) {
+              // Check if error is assignee-related
+              const isAssigneeError = failure.error &&
+                (failure.error.includes('ASSIGNEE_NOT_FOUND') ||
+                 failure.error.toLowerCase().includes('assignee') ||
+                 failure.error.toLowerCase().includes('user'));
+              
               this.stateService.updateActionItem(item.id, {
                 creationError: failure.error
               });
+              
+              // Show specific toast for assignee errors
+              if (isAssigneeError) {
+                this.toastService.error(
+                  `Failed: ${item.title}`,
+                  `Assignee "${item.assignee}" not found in Jira. Please update and retry.`
+                );
+              } else {
+                this.toastService.error(
+                  `Failed: ${item.title}`,
+                  failure.error || 'Unknown error occurred'
+                );
+              }
             }
           });
-
-          created.forEach(ticket => {
-            const item = this.actionItems.find(i => i.jiraTicket?.key === ticket.key);
-            if (item) {
-              this.selectedItems.delete(item.id);
-            }
-          });
+          
+          // Show summary
+          if (created.length > 0) {
+            this.toastService.success(
+              'Tickets Created',
+              `${created.length} ticket(s) created successfully`
+            );
+          }
           
           if (failed.length > 0) {
             this.toastService.error(
               'Some Tickets Failed',
-              `${failed.length} ticket(s) could not be created`
+              `${failed.length} ticket(s) could not be created. Check items for details.`
             );
           }
         } else {
@@ -213,6 +246,27 @@ export class ReviewComponent implements OnInit {
     window.URL.revokeObjectURL(url);
 
     this.toastService.success('Export Complete', 'JSON file has been downloaded');
+  }
+
+  /**
+   * Check if item has assignee-related error
+   */
+  isAssigneeError(item: ActionItem): boolean {
+    return !!(item.creationError && item.creationError.includes('ASSIGNEE_NOT_FOUND'));
+  }
+
+  /**
+   * Get user-friendly error message
+   */
+  getErrorMessage(item: ActionItem): string {
+    if (!item.creationError) return '';
+    
+    if (this.isAssigneeError(item)) {
+      return `Assignee "${item.assignee}" not found in Jira`;
+    }
+    
+    // Remove technical prefixes
+    return item.creationError.replace('ASSIGNEE_NOT_FOUND:', '').trim();
   }
 }
 

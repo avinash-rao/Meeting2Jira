@@ -62,7 +62,13 @@ export class StateService {
   setJiraConfig(config: JiraConfig | null): void {
     this.jiraConfigSubject.next(config);
     if (config) {
-      localStorage.setItem('jiraConfig', JSON.stringify(config));
+      // Encode config using btoa for basic obfuscation
+      try {
+        const encoded = btoa(JSON.stringify(config));
+        localStorage.setItem('jiraConfig', encoded);
+      } catch (e) {
+        console.error('Failed to encode Jira config', e);
+      }
     } else {
       localStorage.removeItem('jiraConfig');
     }
@@ -76,10 +82,14 @@ export class StateService {
     const stored = localStorage.getItem('jiraConfig');
     if (stored) {
       try {
-        const config = JSON.parse(stored);
+        // Decode config using atob
+        const decoded = atob(stored);
+        const config = JSON.parse(decoded);
         this.jiraConfigSubject.next(config);
       } catch (e) {
         console.error('Failed to parse stored Jira config', e);
+        // Clear invalid config
+        localStorage.removeItem('jiraConfig');
       }
     }
   }
