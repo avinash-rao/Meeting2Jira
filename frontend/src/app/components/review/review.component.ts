@@ -141,16 +141,6 @@ export class ReviewComponent implements OnInit {
               
               // Remove from selection
               this.selectedItems.delete(item.id);
-              
-              // Show individual success toast with link
-              this.toastService.success(
-                `${ticket.key} created successfully`,
-                'Ticket has been created in Jira',
-                {
-                  text: 'View in Jira →',
-                  url: ticket.url || `https://${config.domain}/browse/${ticket.key}`
-                }
-              );
             }
           });
 
@@ -158,28 +148,9 @@ export class ReviewComponent implements OnInit {
           failed.forEach((failure: any) => {
             const item = itemsToCreate.find(i => i.id === failure.itemId);
             if (item) {
-              // Check if error is assignee-related
-              const isAssigneeError = failure.error &&
-                (failure.error.includes('ASSIGNEE_NOT_FOUND') ||
-                 failure.error.toLowerCase().includes('assignee') ||
-                 failure.error.toLowerCase().includes('user'));
-              
               this.stateService.updateActionItem(item.id, {
                 creationError: failure.error
               });
-              
-              // Show specific toast for assignee errors
-              if (isAssigneeError) {
-                this.toastService.error(
-                  `Failed: ${item.title}`,
-                  `Assignee "${item.assignee}" not found in Jira. Please update and retry.`
-                );
-              } else {
-                this.toastService.error(
-                  `Failed: ${item.title}`,
-                  failure.error || 'Unknown error occurred'
-                );
-              }
             }
           });
           
