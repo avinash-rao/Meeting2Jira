@@ -1,0 +1,245 @@
+<div class="review-container">
+  <div class="header">
+    <h1>
+      <mat-icon>checklist</mat-icon>
+      Review Action Items
+    </h1>
+    <p class="subtitle">Review and edit extracted action items before creating Jira tickets</p>
+  </div>
+
+  <!-- Empty State -->
+  <mat-card *ngIf="actionItems.length === 0" class="empty-state">
+    <mat-card-content>
+      <mat-icon class="empty-icon">inbox</mat-icon>
+      <h2>No Action Items</h2>
+      <p>Upload a transcript and extract action items to get started.</p>
+      <button mat-raised-button color="primary" routerLink="/upload">
+        <mat-icon>cloud_upload</mat-icon>
+        Upload Transcript
+      </button>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Action Items List -->
+  <div *ngIf="actionItems.length > 0">
+    <!-- Toolbar -->
+    <mat-card class="toolbar-card">
+      <mat-card-content>
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <mat-checkbox
+              [checked]="allSelected()"
+              [indeterminate]="someSelected()"
+              (change)="toggleSelectAll()"
+            >
+              Select All ({{ selectedItems.size }} / {{ actionItems.length }})
+            </mat-checkbox>
+          </div>
+          
+          <div class="toolbar-right">
+            <div class="status-summary" *ngIf="getCreatedCount() > 0 || getFailedCount() > 0">
+              <span class="created-count" *ngIf="getCreatedCount() > 0">✅ {{ getCreatedCount() }} created</span>
+              <span class="failed-count" *ngIf="getFailedCount() > 0">❌ {{ getFailedCount() }} failed</span>
+              <span class="pending-count" *ngIf="getPendingCount() > 0">⏳ {{ getPendingCount() }} pending</span>
+            </div>
+
+            <button mat-button (click)="addNewItem()">
+              <mat-icon>add</mat-icon>
+              Add Item
+            </button>
+
+            <button mat-button (click)="retryFailed()" *ngIf="getFailedCount() > 0">
+              <mat-icon>refresh</mat-icon>
+              Retry Failed
+            </button>
+
+            <button mat-button (click)="clearCreatedItems()" *ngIf="getCreatedCount() > 0">
+              <mat-icon>clear</mat-icon>
+              Clear Created
+            </button>
+            
+            <button mat-button (click)="exportToCSV()">
+              <mat-icon>download</mat-icon>
+              Export CSV
+            </button>
+            
+            <button mat-button (click)="exportToJSON()">
+              <mat-icon>code</mat-icon>
+              Export JSON
+            </button>
+            
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="isCreatingTickets || getPendingCount() === 0"
+              (click)="createJiraTickets()"
+            >
+              <mat-icon>send</mat-icon>
+              {{ isCreatingTickets ? 'Creating...' : 'Create Jira Tickets' }}
+            </button>
+            
+            <mat-spinner *ngIf="isCreatingTickets" diameter="24" class="inline-spinner"></mat-spinner>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Items Cards -->
+    <div class="items-grid">
+      <mat-card *ngFor="let item of actionItems"
+                class="item-card"
+                [class.selected]="isSelected(item.id)"
+                [class.created]="item.jiraTicket"
+                [class.failed]="item.creationError && !item.jiraTicket">
+        <mat-card-header>
+          <div class="card-header-content">
+            <mat-checkbox
+              [checked]="isSelected(item.id)"
+              [disabled]="!!item.jiraTicket"
+              (change)="toggleSelection(item.id)"
+              class="item-checkbox"
+            ></mat-checkbox>
+            
+            <!-- Status Badges -->
+            <mat-chip *ngIf="item.jiraTicket" class="status-chip created-chip">
+              ✅ Created: {{ item.jiraTicket.key }}
+            </mat-chip>
+            
+            <mat-chip *ngIf="item.creationError && !item.jiraTicket" class="status-chip error-chip">
+              ❌ Failed
+            </mat-chip>
+
+            <mat-chip
+              *ngIf="!item.jiraTicket"
+              [class]="'confidence-chip ' + getConfidenceColor(item.confidenceScore)"
+            >
+              {{ getConfidenceLabel(item.confidenceScore) }} ({{ item.confidenceScore }}%)
+            </mat-chip>
+            
+            <a
+              *ngIf="item.jiraTicket"
+              mat-icon-button
+              color="primary"
+              [href]="item.jiraTicket.url"
+              target="_blank"
+              class="view-button"
+              title="View in Jira"
+            >
+              <mat-icon>open_in_new</mat-icon>
+            </a>
+
+            <button
+              mat-icon-button
+              color="warn"
+              [disabled]="!!item.jiraTicket"
+              (click)="removeItem(item.id)"
+              class="remove-button"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <!-- Error Message -->
+          <div *ngIf="item.creationError" class="error-message">
+            <mat-icon>error</mat-icon>
+            <span>{{ item.creationError }}</span>
+          </div>
+
+          <!-- Created Info -->
+          <div *ngIf="item.jiraTicket" class="created-info">
+            <mat-icon>check_circle</mat-icon>
+            <span>Created on {{ item.jiraTicket.createdAt | date:'short' }}</span>
+            <a [href]="item.jiraTicket.url" target="_blank" class="jira-link">
+              View {{ item.jiraTicket.key }} in Jira
+              <mat-icon>open_in_new</mat-icon>
+            </a>
+          </div>
+
+          <!-- Title -->
+          <mat-form-field class="full-width">
+            <mat-label>Title</mat-label>
+            <input
+              matInput
+              [(ngModel)]="item.title"
+              [disabled]="!!item.jiraTicket"
+              (ngModelChange)="updateItem(item.id, 'title', $event)"
+              placeholder="Action item title"
+            />
+          </mat-form-field>
+
+          <!-- Description -->
+          <mat-form-field class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="item.description"
+              [disabled]="!!item.jiraTicket"
+              (ngModelChange)="updateItem(item.id, 'description', $event)"
+              placeholder="Detailed description"
+              rows="3"
+            ></textarea>
+          </mat-form-field>
+
+          <!-- Assignee and Priority Row -->
+          <div class="form-row">
+            <mat-form-field class="half-width">
+              <mat-label>Assignee</mat-label>
+              <input
+                matInput
+                [(ngModel)]="item.assignee"
+                [disabled]="!!item.jiraTicket"
+                (ngModelChange)="updateItem(item.id, 'assignee', $event)"
+                placeholder="Assignee name"
+              />
+            </mat-form-field>
+
+            <mat-form-field class="half-width">
+              <mat-label>Priority</mat-label>
+              <mat-select
+                [(ngModel)]="item.priority"
+                [disabled]="!!item.jiraTicket"
+                (ngModelChange)="updateItem(item.id, 'priority', $event)"
+              >
+                <mat-option *ngFor="let priority of priorities" [value]="priority">
+                  {{ priority }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Due Date -->
+          <mat-form-field class="full-width">
+            <mat-label>Due Date</mat-label>
+            <input
+              matInput
+              [matDatepicker]="picker"
+              [(ngModel)]="item.dueDate"
+              [disabled]="!!item.jiraTicket"
+              (ngModelChange)="updateItem(item.id, 'dueDate', $event)"
+              placeholder="Select due date"
+            />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+
+          <!-- Source Quote -->
+          <div class="source-quote">
+            <div class="source-label">
+              <mat-icon>format_quote</mat-icon>
+              Source Quote
+            </div>
+            <p class="quote-text">{{ item.sourceQuote }}</p>
+            <p class="timestamp" *ngIf="item.timestamp">
+              <mat-icon>schedule</mat-icon>
+              {{ item.timestamp }}
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
+
+<!-- Made with Bob -->

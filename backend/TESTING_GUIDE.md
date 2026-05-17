@@ -49,7 +49,7 @@ npm test -- --coverage
 
 ### Run Specific Test File
 ```bash
-npm test -- openai.service.test.ts
+npm test -- watsonx.service.test.ts
 npm test -- extract.controller.test.ts
 npm test -- integration.test.ts
 ```
@@ -87,7 +87,7 @@ Tests the API endpoint handlers:
 - ✅ Missing transcript validation (400 error)
 - ✅ Empty entries validation (400 error)
 - ✅ Missing entries field validation (400 error)
-- ✅ OpenAI API key error handling (500 error)
+- ✅ WatsonX API key error handling (500 error)
 - ✅ Generic extraction error handling
 - ✅ Multiple action items handling
 - ✅ Connection test success/failure
@@ -115,7 +115,7 @@ npm test -- integration.test.ts
 
 ## Manual Testing
 
-### 1. Test OpenAI Connection
+### 1. Test WatsonX AI Connection
 
 **Request:**
 ```bash
@@ -253,7 +253,7 @@ curl -X POST http://localhost:3000/api/extract \
 ## Error Testing
 
 ### 1. Missing API Key
-Remove `OPENAI_API_KEY` from `.env` and restart server.
+Remove `WATSONX_API_KEY` from `.env` and restart server.
 
 **Request:**
 ```bash
@@ -266,7 +266,7 @@ curl -X POST http://localhost:3000/api/extract \
 ```json
 {
   "success": false,
-  "error": "OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable."
+  "error": "WatsonX API key is not configured. Please set WATSONX_API_KEY environment variable."
 }
 ```
 
@@ -322,8 +322,8 @@ Tests should be run automatically on:
 npm install
 ```
 
-### OpenAI API Errors in Tests
-Tests use mocked OpenAI service. If you see real API errors, check that mocks are properly configured.
+### WatsonX API Errors in Tests
+Tests use mocked WatsonX service. If you see real API errors, check that mocks are properly configured.
 
 ### TypeScript Errors
 ```bash

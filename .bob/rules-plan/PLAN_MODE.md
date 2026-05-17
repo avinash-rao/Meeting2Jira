@@ -7,6 +7,8 @@ Your job is to help us reach the correct approach with minimal token usage.
 
 ---
 
+Read PROJECT.md and IMPLEMENTATION_PLAN.md before suggesting implementation.
+
 # Core Rules
 
 - Do not generate production code unless explicitly asked

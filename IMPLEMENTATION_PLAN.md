@@ -47,7 +47,7 @@ meeting2jira/
 
 ### 1.1 Backend Setup
 - [ ] Initialize Node.js project with TypeScript
-- [ ] Install dependencies: express, cors, multer, dotenv, openai
+- [ ] Install dependencies: express, cors, multer, dotenv, @ibm-cloud/watsonx-ai
 - [ ] Configure TypeScript (strict mode, ES modules)
 - [ ] Set up Express server with CORS
 - [ ] Create environment variables structure (.env.example)
@@ -91,8 +91,8 @@ interface TranscriptEntry {
 
 ## Phase 2: AI Integration (Day 1 Afternoon)
 
-### 2.1 OpenAI Setup
-- [ ] Configure OpenAI API client (GPT-4o)
+### 2.1 WatsonX AI Setup
+- [ ] Configure IBM watsonx.ai client (Llama 3.3 70B Instruct)
 - [ ] Design extraction prompt:
   - Input: parsed transcript
   - Output: structured action items JSON
@@ -244,7 +244,7 @@ interface JiraConfig {
   - Environment variables for API URL
 - [ ] Create Render configuration (backend):
   - `render.yaml`
-  - Environment variables for OpenAI API key
+  - Environment variables for WatsonX API key
   - CORS configuration for Vercel domain
 
 ### 6.3 Deploy to Production
@@ -299,10 +299,10 @@ interface JiraConfig {
 └──────┬──────┘
        │ API Calls
        ▼
-┌─────────────┐      ┌──────────────┐
-│   Render    │─────▶│  OpenAI API  │
-│  (Backend)  │      │   (GPT-4o)   │
-└──────┬──────┘      └──────────────┘
+┌─────────────┐      ┌──────────────────┐
+│   Render    │─────▶│ IBM watsonx.ai   │
+│  (Backend)  │      │ (Llama 3.3 70B)  │
+└──────┬──────┘      ┌──────────────────┘
        │
        ▼
 ┌─────────────┐
@@ -314,7 +314,7 @@ interface JiraConfig {
 ### Data Flow
 ```
 1. Upload .vtt/.docx → Backend parses → Returns transcript
-2. Frontend sends transcript → Backend calls OpenAI → Returns action items
+2. Frontend sends transcript → Backend calls watsonx.ai → Returns action items
 3. User reviews/edits → Frontend sends to Jira API → Tickets created
 ```
 
@@ -335,7 +335,8 @@ interface JiraConfig {
 ### Backend (.env)
 ```
 PORT=3000
-OPENAI_API_KEY=sk-...
+WATSONX_API_KEY=your-api-key
+WATSONX_PROJECT_ID=your-project-id
 CORS_ORIGIN=https://meeting2jira.vercel.app
 NODE_ENV=production
 ```
@@ -378,7 +379,7 @@ export const environment = {
 
 | Risk | Mitigation |
 |------|-----------|
-| OpenAI API rate limits | Implement retry logic, use caching |
+| WatsonX API rate limits | Implement retry logic, use caching |
 | Jira API authentication issues | Test early, provide clear error messages |
 | Deployment delays | Have local version ready as backup |
 | Transcript parsing failures | Handle edge cases, provide manual input option |

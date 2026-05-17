@@ -88,7 +88,7 @@ Extract action items from a parsed transcript.
 ```
 
 ### GET /api/extract/test
-Test OpenAI API connection.
+Test WatsonX AI API connection.
 
 **Response:**
 ```json
@@ -220,7 +220,7 @@ echo $TRANSCRIPT | curl -X POST http://localhost:3000/api/extract \
 3. `src/routes/extract.routes.ts` - Extract route definitions
 4. `src/server.ts` - Updated with extract routes
 5. `PHASE2_COMPLETE.md` - This documentation
-6. `WATSONX_MIGRATION.md` - Migration guide from OpenAI
+6. `WATSONX_MIGRATION.md` - Migration guide from OpenAI to WatsonX
 
 ## Error Handling
 

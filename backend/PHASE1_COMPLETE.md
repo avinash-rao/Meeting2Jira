@@ -186,7 +186,7 @@ UPLOAD_DIR=./uploads
 
 ## Next Steps: Phase 2 - AI Integration
 
-- [ ] Create OpenAI service
+- [ ] Create WatsonX AI service
 - [ ] Design extraction prompts
 - [ ] Implement `/api/extract` endpoint
 - [ ] Test with sample transcripts
