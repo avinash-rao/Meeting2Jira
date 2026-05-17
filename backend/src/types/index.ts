@@ -53,12 +53,14 @@ export interface JiraTicket {
   id: string;
   key: string;
   self: string;
+  itemId?: string; // ID of the original action item
 }
 
 export interface JiraCreateResponse {
   success: boolean;
-  created: JiraTicket[];
+  created: Array<JiraTicket & { itemId: string }>;
   failed: Array<{
+    itemId: string;
     item: ActionItem;
     error: string;
   }>;
